@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import modusLogo from "../../../assets/Modus.png";
-import { cn } from "../lib/utils";
+import modusLogo from "../../../../assets/Modus.png";
+import { cn } from "../../lib/utils";
 
 type BrandLogoProps = {
   className?: string;
@@ -10,7 +10,7 @@ type BrandLogoProps = {
 
 const sizeClasses = {
   sidebar: "h-11 w-auto max-w-[170px]",
-  header: "h-9 w-auto max-w-[160px]",
+  header: "h-8 w-auto max-w-[150px] sm:h-9 sm:max-w-[160px]",
   auth: "h-11 w-auto max-w-[190px]",
 } as const;
 
