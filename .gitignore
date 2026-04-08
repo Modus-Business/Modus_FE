@@ -5,6 +5,7 @@ dist
 coverage
 .turbo
 .pnpm-store
+.playwright-mcp
 .codex
 .omx
 *.tsbuildinfo
