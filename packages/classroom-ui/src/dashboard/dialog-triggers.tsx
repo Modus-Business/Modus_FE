@@ -4,7 +4,16 @@ import { Bell, FileUp, Plus, UserPlus } from "lucide-react";
 
 import type { NoticeItem } from "../lib/mock-data";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
@@ -44,7 +53,9 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline">닫기</Button>
+          <DialogClose asChild>
+            <Button variant="outline">닫기</Button>
+          </DialogClose>
           <Button>참여하기</Button>
         </DialogFooter>
       </DialogContent>
@@ -82,7 +93,9 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline">취소</Button>
+          <DialogClose asChild>
+            <Button variant="outline">취소</Button>
+          </DialogClose>
           <Button>생성하기</Button>
         </DialogFooter>
       </DialogContent>
@@ -147,7 +160,9 @@ export function SubmitAssignmentDialog({ className }: { className: string }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline">임시 저장</Button>
+          <DialogClose asChild>
+            <Button variant="outline">임시 저장</Button>
+          </DialogClose>
           <Button>제출하기</Button>
         </DialogFooter>
       </DialogContent>
@@ -180,7 +195,9 @@ export function NewNoticeDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline">미리보기</Button>
+          <DialogClose asChild>
+            <Button variant="outline">미리보기</Button>
+          </DialogClose>
           <Button>게시하기</Button>
         </DialogFooter>
       </DialogContent>

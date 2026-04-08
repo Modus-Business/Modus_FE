@@ -14,6 +14,10 @@ function DialogTrigger(props: React.ComponentProps<typeof DialogPrimitive.Trigge
   return <DialogPrimitive.Trigger {...props} />;
 }
 
+function DialogClose(props: React.ComponentProps<typeof DialogPrimitive.Close>) {
+  return <DialogPrimitive.Close {...props} />;
+}
+
 function DialogContent({ className, children, ...props }: React.ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPrimitive.Portal>
@@ -54,6 +58,7 @@ function DialogDescription({ className, ...props }: React.ComponentProps<typeof 
 export {
   Dialog,
   DialogTrigger,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogFooter,
