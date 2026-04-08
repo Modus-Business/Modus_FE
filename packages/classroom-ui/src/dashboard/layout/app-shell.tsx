@@ -98,7 +98,7 @@ export function AppShell({ role, children }: AppShellProps) {
         />
       </div>
 
-      <main className="min-h-svh min-w-0 bg-[radial-gradient(circle_at_top_left,_rgba(91,132,255,0.12),_transparent_32%),linear-gradient(180deg,#f8faff_0%,#f4f7fb_100%)]">
+      <main className="flex min-h-svh min-w-0 flex-col bg-[radial-gradient(circle_at_top_left,_rgba(91,132,255,0.12),_transparent_32%),linear-gradient(180deg,#f8faff_0%,#f4f7fb_100%)]">
         <TopHeader
           role={role}
           profileName={profile.realName}
@@ -106,8 +106,8 @@ export function AppShell({ role, children }: AppShellProps) {
           onOpenMobileNav={() => setMobileNavOpen(true)}
           showBrandLogo={showHeaderBrandLogo}
         />
-        <div className="px-3 py-3 sm:px-4 sm:py-4 lg:px-5 lg:py-5">
-          <div className="flex w-full min-w-0 flex-col gap-3">{children}</div>
+        <div className="flex min-h-0 flex-1 px-3 py-3 sm:px-4 sm:py-4 lg:px-5 lg:py-5">
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3">{children}</div>
         </div>
       </main>
     </div>

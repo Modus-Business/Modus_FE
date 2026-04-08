@@ -57,16 +57,22 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
   }, [openMenuId]);
 
   return (
-    <Card className={cn("overflow-hidden bg-white/95", className)}>
+    <Card
+      className={cn(
+        "flex h-full min-h-[32rem] flex-col overflow-hidden bg-white/95 xl:min-h-0",
+        className,
+      )}
+    >
       {showHeader ? (
         <CardHeader className="border-b border-border/70 px-4 py-4 sm:px-6 sm:py-5">
           <CardTitle>{group.name} 전체 채팅</CardTitle>
           <CardDescription>{group.topic}</CardDescription>
         </CardHeader>
       ) : null}
-      <CardContent className="p-0">
-        <div className="overflow-hidden bg-[linear-gradient(180deg,rgba(249,251,255,0.96)_0%,rgba(244,247,252,0.96)_100%)]">
-          <div className="space-y-4 p-3 sm:p-6 lg:space-y-5 lg:p-7">
+      <CardContent className="flex min-h-0 flex-1 p-0">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(249,251,255,0.96)_0%,rgba(244,247,252,0.96)_100%)]">
+          <div className="flex-1 overflow-y-auto">
+            <div className="space-y-4 p-3 sm:p-6 lg:space-y-5 lg:p-7">
             {group.messages.map((message) => (
               <div
                 key={message.id}
@@ -95,7 +101,7 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                     {openMenuId === message.id ? (
                       <div
                         role="menu"
-                        className="absolute top-10 right-0 min-w-32 overflow-hidden rounded-2xl border border-border/70 bg-white/98 p-1 shadow-[0_16px_40px_rgba(15,23,42,0.12)] backdrop-blur"
+                        className="absolute right-full bottom-full mr-2 mb-2 min-w-32 overflow-hidden rounded-2xl border border-border/70 bg-white/98 p-1 shadow-[0_16px_40px_rgba(15,23,42,0.12)] backdrop-blur"
                       >
                         <button
                           type="button"
@@ -141,14 +147,14 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                 ) : null}
                 <div
                   className={cn(
-                    "relative w-fit max-w-[min(100%,22rem)] break-words rounded-[24px] border px-4 py-3 text-sm leading-7 shadow-none sm:max-w-[86%] sm:px-5 sm:py-4 sm:text-base sm:leading-8 lg:px-6 lg:py-5",
+                    "relative w-fit max-w-[min(100%,22rem)] break-words rounded-[24px] border px-4 py-3 text-xs leading-6 shadow-none sm:max-w-[86%] sm:px-5 sm:py-4 sm:text-sm sm:leading-7 lg:px-6 lg:py-5",
                     message.own
-                      ? "border-primary/15 bg-[linear-gradient(180deg,rgba(247,250,255,0.98)_0%,rgba(239,245,255,0.98)_100%)] text-foreground sm:max-w-[72%]"
+                      ? "border-border/60 bg-white text-foreground sm:max-w-[72%]"
                       : "border-border/60 bg-white text-foreground",
                   )}
                 >
                   <div
-                    className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground sm:text-sm"
+                    className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs"
                   >
                     <span className="font-semibold">{message.author}</span>
                     <span>{message.time}</span>
@@ -164,9 +170,10 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                 ) : null}
               </div>
             ))}
+            </div>
           </div>
 
-          <div className="border-t border-border/70 bg-white p-4 shadow-none sm:p-5 lg:p-6">
+          <div className="sticky bottom-0 z-10 border-t border-border/70 bg-white/95 p-4 shadow-none backdrop-blur sm:p-5 lg:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
               <Textarea
                 ref={textareaRef}
@@ -174,7 +181,7 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                 value={draft}
                 onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)}
                 placeholder="메시지를 입력하세요."
-                className="max-h-[360px] min-h-14 flex-1 resize-none overflow-y-auto rounded-none border-0 px-0 py-3 text-sm leading-7 shadow-none focus-visible:ring-0 sm:min-h-16 sm:py-3.5 sm:text-base"
+                className="max-h-[360px] min-h-9 flex-1 resize-none overflow-y-auto rounded-none border-0 px-0 pt-1.5 pb-2 text-sm leading-5 shadow-none focus-visible:ring-0 sm:min-h-11 sm:pt-2 sm:pb-2.5 sm:text-[15px] sm:leading-6"
               />
               <Button size="lg" disabled={!draft.trim()} className="w-full shrink-0 sm:w-auto sm:min-w-28 sm:self-end">
                 <SendHorizontal className="size-4" />
