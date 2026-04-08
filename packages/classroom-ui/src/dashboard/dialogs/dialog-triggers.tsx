@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { useState } from "react";
-import { Bell, FileUp, Flag, Plus, UserPlus } from "lucide-react";
+import { Bell, FileUp, Flag, Hash, Plus, UserPlus } from "lucide-react";
 
 import type { AssignmentSummary, NoticeItem } from "../../lib/mock-data";
 import { Badge } from "../../ui/badge";
@@ -151,6 +151,42 @@ export function NoticesDialog({
               </div>
             </div>
           ))}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">닫기</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function ClassCodeDialog({
+  classCode,
+  triggerProps,
+}: {
+  classCode: string;
+  triggerProps?: TriggerButtonProps;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" {...triggerProps}>
+          <Hash className="size-4" />
+          수업 코드
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>수업 코드</DialogTitle>
+          <DialogDescription>학생에게 안내할 수업 코드를 여기에서 확인하고 공유해 보세요.</DialogDescription>
+        </DialogHeader>
+        <div className="py-2">
+          <div className="rounded-[28px] border border-primary/20 bg-primary/5 px-5 py-5 text-center">
+            <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">Class Code</p>
+            <p className="mt-3 break-all text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{classCode}</p>
+          </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
