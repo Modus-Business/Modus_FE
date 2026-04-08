@@ -7,10 +7,9 @@ export default function TeacherHomePage() {
   return (
     <>
       <PageHeader
-        eyebrow="apps/teacher"
         title="운영 중인 수업과 공지 흐름을 한 화면에서 관리합니다"
         description="teacher 앱은 수업 생성, 수업 코드 확인, 공지 작성, 모둠 현황 관리에 초점을 맞춥니다."
-        profileName={teacherProfile.realName}
+        profileName={teacherProfile.nickname}
         profileDescriptor={teacherProfile.descriptor}
         actions={<CreateClassDialog />}
       />

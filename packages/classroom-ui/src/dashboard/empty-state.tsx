@@ -1,15 +1,13 @@
 import { Sparkles } from "lucide-react";
 
-import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 
 type EmptyStateProps = {
   title: string;
   description: string;
-  actionLabel?: string;
 };
 
-export function EmptyState({ title, description, actionLabel }: EmptyStateProps) {
+export function EmptyState({ title, description }: EmptyStateProps) {
   return (
     <Card className="border-dashed border-primary/20 bg-linear-to-br from-white to-secondary/40">
       <CardContent className="flex flex-col items-center gap-4 px-6 py-10 text-center">
@@ -18,9 +16,8 @@ export function EmptyState({ title, description, actionLabel }: EmptyStateProps)
         </div>
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">{title}</h3>
-          <p className="max-w-lg text-sm leading-6 text-muted-foreground">{description}</p>
+          <p className="max-w-3xl text-sm leading-7 text-muted-foreground break-keep">{description}</p>
         </div>
-        {actionLabel ? <Button variant="secondary">{actionLabel}</Button> : null}
       </CardContent>
     </Card>
   );

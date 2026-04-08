@@ -4,10 +4,9 @@ export default function TeacherClassesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="apps/teacher/classes"
         title="운영 중인 클래스 목록을 카드형으로 정리했습니다"
         description="코드, 인원 수, 모둠 수, 설명을 한 번에 노출해 교강사가 수업 상태를 빠르게 파악할 수 있게 구성합니다."
-        profileName={teacherProfile.realName}
+        profileName={teacherProfile.nickname}
         profileDescriptor={teacherProfile.descriptor}
         actions={<CreateClassDialog />}
       />

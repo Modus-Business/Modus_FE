@@ -15,10 +15,9 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
   return (
     <>
       <PageHeader
-        eyebrow={classroom.code}
         title={classroom.group ? classroom.group.name : classroom.name}
         description={`${classroom.name} · ${classroom.schedule} · ${classroom.description}`}
-        profileName={studentProfile.realName}
+        profileName={studentProfile.nickname}
         profileDescriptor={studentProfile.descriptor}
         actions={<><NoticesDialog notices={classroom.notices} /><SubmitAssignmentDialog className={classroom.name} /></>}
       />
@@ -27,13 +26,12 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
         <EmptyState
           title="참여되있는 모둠이 없습니다"
           description="모둠 배정 전 클래스 화면입니다. 공지와 과제 확인은 가능하지만 채팅과 팀원 목록은 모둠이 생성된 뒤 활성화됩니다."
-          actionLabel="모둠 배정 알림 기다리기"
         />
       ) : (
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_360px]">
-          <div className="space-y-4">
+        <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_330px]">
+          <div className="space-y-3">
             <GroupChat group={classroom.group} />
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-3 lg:grid-cols-2">
               <Card className="bg-white/95">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Flag className="size-5 text-primary" />모둠 과제</CardTitle>
@@ -41,7 +39,7 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {classroom.assignments.map((assignment) => (
-                    <div key={assignment.id} className="rounded-3xl bg-background/80 p-4">
+                    <div key={assignment.id} className="border border-border/70 bg-background/80 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-medium text-foreground">{assignment.title}</p>
                         <Badge variant={assignment.status === "제출 전" ? "warning" : "secondary"}>{assignment.status}</Badge>
@@ -58,7 +56,7 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {classroom.notices.slice(0, 2).map((notice) => (
-                    <div key={notice.id} className="rounded-3xl border border-border/70 bg-white p-4">
+                    <div key={notice.id} className="border border-border/70 bg-white p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-medium text-foreground">{notice.title}</p>
                         <span className="text-xs text-muted-foreground">{notice.date}</span>
@@ -78,7 +76,7 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
             </CardHeader>
             <CardContent className="space-y-3">
               {classroom.group.members.map((member) => (
-                <div key={member.id} className="rounded-3xl border border-border/70 bg-background/70 p-4">
+                <div key={member.id} className="border border-border/70 bg-background/70 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-medium text-foreground">{member.nickname}</p>
@@ -89,7 +87,7 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
                   <p className="mt-2 text-xs text-muted-foreground">본명: {member.realName}</p>
                 </div>
               ))}
-              <div className="rounded-3xl border border-dashed border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+              <div className="border border-dashed border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
                 <p className="flex items-center gap-2 font-medium text-foreground"><Hash className="size-4 text-primary" />수업 코드 {classroom.code}</p>
                 <p className="mt-2">수업 참여 다이얼로그에서 동일한 코드를 입력하는 흐름을 가정합니다.</p>
               </div>

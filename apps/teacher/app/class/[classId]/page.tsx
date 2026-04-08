@@ -15,10 +15,9 @@ export default async function TeacherClassPage({ params }: TeacherClassPageProps
   return (
     <>
       <PageHeader
-        eyebrow={classroom.cohort}
         title={classroom.name}
         description={`${classroom.schedule} · ${classroom.description}`}
-        profileName={teacherProfile.realName}
+        profileName={teacherProfile.nickname}
         profileDescriptor={teacherProfile.descriptor}
         actions={<><NoticesDialog notices={classroom.notices} /><NewNoticeDialog /></>}
       />

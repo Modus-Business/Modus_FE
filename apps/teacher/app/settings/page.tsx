@@ -6,10 +6,9 @@ export default function TeacherSettingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="apps/teacher/settings"
         title="교강사 계정과 운영 옵션을 미리 정리합니다"
         description="프로필, 공지 기본값, 수업 코드 공유 정책 등 교강사 중심 설정 UI를 선행 퍼블리싱합니다."
-        profileName={teacherProfile.realName}
+        profileName={teacherProfile.nickname}
         profileDescriptor={teacherProfile.descriptor}
       />
       <section className="grid gap-4 xl:grid-cols-3">

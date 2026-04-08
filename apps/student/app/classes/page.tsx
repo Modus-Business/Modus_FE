@@ -4,10 +4,9 @@ export default function StudentClassesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="apps/student/classes"
         title="내가 참여한 클래스를 모아서 봅니다"
         description="데스크톱 기준으로 수업 카드 밀도를 높여, 클래스룸의 과목 목록처럼 탐색할 수 있게 구성했습니다."
-        profileName={studentProfile.realName}
+        profileName={studentProfile.nickname}
         profileDescriptor={studentProfile.descriptor}
       />
       <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">

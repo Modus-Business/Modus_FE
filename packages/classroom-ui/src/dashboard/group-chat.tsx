@@ -18,8 +18,8 @@ export function GroupChat({ group }: GroupChatProps) {
         <CardTitle>{group.name} 전체 채팅</CardTitle>
         <CardDescription>{group.topic}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 p-5">
-        <div className="space-y-4 rounded-[28px] bg-background/80 p-4">
+      <CardContent className="space-y-3 p-4">
+        <div className="space-y-3 border border-border/50 bg-background/80 p-3">
           {group.messages.map((message) => (
             <div key={message.id} className={cn("flex gap-3", message.own ? "justify-end" : "justify-start")}>
               {!message.own ? (
@@ -27,7 +27,7 @@ export function GroupChat({ group }: GroupChatProps) {
                   <AvatarFallback>{message.author.slice(0, 2)}</AvatarFallback>
                 </Avatar>
               ) : null}
-              <div className={cn("max-w-[80%] rounded-[22px] px-4 py-3 text-sm leading-6 shadow-sm", message.own ? "bg-primary text-primary-foreground" : "bg-white text-foreground")}>
+              <div className={cn("max-w-[82%] border border-border/50 px-4 py-3 text-sm leading-6 shadow-none", message.own ? "bg-primary text-primary-foreground border-primary" : "bg-white text-foreground")}>
                 <div className={cn("mb-1 flex items-center gap-2 text-xs", message.own ? "text-primary-foreground/80" : "text-muted-foreground")}>
                   <span className="font-medium">{message.author}</span>
                   <span>{message.handle}</span>
@@ -39,7 +39,7 @@ export function GroupChat({ group }: GroupChatProps) {
           ))}
         </div>
 
-        <div className="rounded-[28px] border border-border/70 bg-white p-3 shadow-sm">
+        <div className="border border-border/70 bg-white p-3 shadow-none">
           <Textarea disabled placeholder="퍼블리싱 단계에서는 채팅 입력 UI만 제공합니다." className="min-h-24 resize-none border-0 bg-transparent px-1 py-1 shadow-none focus-visible:ring-0" />
           <div className="flex justify-end">
             <Button size="sm" disabled>

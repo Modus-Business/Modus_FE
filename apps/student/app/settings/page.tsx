@@ -6,10 +6,9 @@ export default function StudentSettingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="apps/student/settings"
         title="프로필과 알림 옵션을 미리 정리합니다"
         description="실제 저장 로직 이전 단계에서, 학생에게 필요한 노출 범위와 알림 설정 UI를 퍼블리싱합니다."
-        profileName={studentProfile.realName}
+        profileName={studentProfile.nickname}
         profileDescriptor={studentProfile.descriptor}
       />
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">

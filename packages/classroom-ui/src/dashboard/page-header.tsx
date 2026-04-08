@@ -22,24 +22,24 @@ export function PageHeader({ title, description, eyebrow, profileName, profileDe
     day: "2-digit",
     weekday: "short"
   }).format(new Date());
+  const compactDescriptor = profileDescriptor.split("·")[0]?.trim() ?? profileDescriptor;
 
   return (
-    <header className={cn("border border-border/70 bg-white/90 px-6 py-5 shadow-none", className)}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <header className={cn("border border-border/70 bg-white/90 px-5 py-4 shadow-none", className)}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2.5">
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-secondary-foreground">
               <CalendarDays className="size-4" />
               {today}
             </span>
-            {eyebrow ? <Badge variant="outline">{eyebrow}</Badge> : null}
           </div>
           <div>
             <h2 className="text-[2rem] font-semibold tracking-tight text-foreground">{title}</h2>
             <p className="mt-2 max-w-3xl text-xs leading-6 text-muted-foreground">{description}</p>
           </div>
         </div>
-        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
           <div className="flex min-w-[220px] items-center gap-3 border border-border/70 bg-background/70 px-4 py-3">
             <Avatar className="size-11 ring-4 ring-primary/10">
@@ -47,7 +47,7 @@ export function PageHeader({ title, description, eyebrow, profileName, profileDe
             </Avatar>
             <div>
               <p className="text-sm font-semibold text-foreground">{profileName}</p>
-              <p className="text-xs leading-5 text-muted-foreground">{profileDescriptor}</p>
+              <p className="text-xs leading-5 text-muted-foreground">{compactDescriptor}</p>
             </div>
           </div>
         </div>
