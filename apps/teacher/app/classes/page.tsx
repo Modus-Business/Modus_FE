@@ -20,10 +20,7 @@ export default function TeacherClassesPage() {
               href={`/class/${classroom.id}`}
               name={classroom.name}
               code={classroom.code}
-              schedule={classroom.schedule}
               description={classroom.description}
-              metaLabel="코호트"
-              metaValue={classroom.cohort}
               footerLabel="학생 수"
               footerValue={`${classroom.studentCount}명`}
             />

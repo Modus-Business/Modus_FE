@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "../../lib/utils";
-import { getStudentClassroom, studentProfile, teacherProfile, type UserRole } from "../../lib/mock-data";
+import { getStudentClassroom, getTeacherClassroom, studentProfile, teacherProfile, type UserRole } from "../../lib/mock-data";
 import { AssignmentSummaryDialog, NoticesDialog, SubmitAssignmentDialog } from "../dialogs/dialog-triggers";
 import { SidebarNav } from "./sidebar-nav";
 import { TopHeader } from "./top-header";
@@ -23,7 +23,9 @@ export function AppShell({ role, children }: AppShellProps) {
   const sidebarDisplayName = role === "student" ? profile.nickname : profile.realName;
   const headerDisplayName = role === "student" ? profile.nickname : profile.realName;
   const studentClassroomMatch = role === "student" ? pathname.match(/^\/class\/([^/]+)$/) : null;
+  const teacherClassroomMatch = role === "teacher" ? pathname.match(/^\/class\/([^/]+)$/) : null;
   const studentClassroom = studentClassroomMatch ? getStudentClassroom(decodeURIComponent(studentClassroomMatch[1])) : undefined;
+  const teacherClassroom = teacherClassroomMatch ? getTeacherClassroom(decodeURIComponent(teacherClassroomMatch[1])) : undefined;
   const studentGroupLabel = studentClassroom?.group?.name.split("·")[0]?.trim();
   const classroomHeaderActions = studentClassroom ? (
     <>
@@ -135,7 +137,7 @@ export function AppShell({ role, children }: AppShellProps) {
           profileDescriptor={profile.descriptor}
           hideProfileDescriptor={role === "teacher"}
           onOpenMobileNav={() => setMobileNavOpen(true)}
-          showBrandLogo={studentClassroom ? true : showHeaderBrandLogo}
+          showBrandLogo={studentClassroom || teacherClassroom ? true : showHeaderBrandLogo}
           classroomContext={
             studentClassroom
               ? {
@@ -145,6 +147,11 @@ export function AppShell({ role, children }: AppShellProps) {
                   profileName: studentProfile.nickname,
                   hideProfileDescriptor: true,
                 }
+              : teacherClassroom
+                ? {
+                    title: teacherClassroom.name,
+                    hideProfileDescriptor: true,
+                  }
               : undefined
           }
         />

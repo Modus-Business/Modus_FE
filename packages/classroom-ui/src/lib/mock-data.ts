@@ -275,21 +275,21 @@ export const teacherClassrooms: TeacherClassroom[] = [
         name: "모둠 1 · 탐색",
         theme: "리서치 구조화",
         members: 4,
-        submissionStatus: "확인 완료"
+        submissionStatus: "제출 완료"
       },
       {
         id: "tg2",
         name: "모둠 2 · 인터랙션",
         theme: "대시보드 설계",
         members: 4,
-        submissionStatus: "검토 중"
+        submissionStatus: "제출 미완료"
       },
       {
         id: "tg3",
         name: "모둠 3 · 스프린트",
         theme: "클래스룸 퍼블리싱",
         members: 4,
-        submissionStatus: "제출 대기"
+        submissionStatus: "제출 미완료"
       }
     ]
   },
@@ -316,14 +316,14 @@ export const teacherClassrooms: TeacherClassroom[] = [
         name: "모둠 A · 인사이트",
         theme: "사용자 인터뷰",
         members: 4,
-        submissionStatus: "확인 완료"
+        submissionStatus: "제출 완료"
       },
       {
         id: "sbg2",
         name: "모둠 B · 구조",
         theme: "서비스 맵",
         members: 4,
-        submissionStatus: "제출 전"
+        submissionStatus: "제출 미완료"
       }
     ]
   }
