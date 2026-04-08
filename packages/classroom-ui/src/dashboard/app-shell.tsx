@@ -45,9 +45,8 @@ export function AppShell({ role, children }: AppShellProps) {
       <div className="hidden border-r border-border/70 bg-white/90 transition-[width] duration-300 ease-in-out lg:block">
         <SidebarNav
           role={role}
-          nickname={profile.nickname}
+          nickname={profile.realName}
           descriptor={profile.descriptor}
-          footerNote={profile.footerNote}
           collapsed={!sidebarOpen}
           onToggle={() => setSidebarOpen((prev) => !prev)}
         />

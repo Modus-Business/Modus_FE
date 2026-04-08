@@ -31,9 +31,10 @@ export function TopHeader({ role, profileName }: TopHeaderProps) {
             <Grid2x2 className="size-5" />
           </Button>
           <Avatar className="size-11 ring-2 ring-primary/10">
-            <AvatarFallback className="bg-slate-900 text-white">
-              {profileName.slice(0, 2)}
-            </AvatarFallback>
+            <AvatarFallback
+              className="bg-[linear-gradient(135deg,#6f8dff_0%,#4068f2_100%)] text-transparent"
+              aria-label={profileName}
+            />
           </Avatar>
         </div>
       </div>

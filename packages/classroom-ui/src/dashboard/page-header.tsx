@@ -43,7 +43,7 @@ export function PageHeader({ title, description, eyebrow, profileName, profileDe
           {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
           <div className="flex min-w-[220px] items-center gap-3 border border-border/70 bg-background/70 px-4 py-3">
             <Avatar className="size-11 ring-4 ring-primary/10">
-              <AvatarFallback>{profileName.slice(0, 2)}</AvatarFallback>
+              <AvatarFallback className="bg-[radial-gradient(circle_at_30%_30%,#f1f5ff_0%,#dfe8ff_55%,#cfdcff_100%)] text-transparent" aria-hidden="true" />
             </Avatar>
             <div>
               <p className="text-sm font-semibold text-foreground">{profileName}</p>

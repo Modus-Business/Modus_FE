@@ -7,7 +7,6 @@ import { BookMarked, House, Layers3, LogOut, Menu, Settings } from "lucide-react
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
 import { cn } from "../lib/utils";
 import { BrandLogo } from "./brand-logo";
 
@@ -17,7 +16,6 @@ type SidebarNavProps = {
   role: DashboardRole;
   nickname: string;
   descriptor: string;
-  footerNote: string;
   collapsed?: boolean;
   onToggle?: () => void;
 };
@@ -39,12 +37,12 @@ export function SidebarNav({
   role,
   nickname,
   descriptor,
-  footerNote,
   collapsed = false,
   onToggle,
 }: SidebarNavProps) {
   const pathname = usePathname();
   const items = navConfig[role];
+  const compactDescriptor = descriptor.split("·")[0]?.trim() ?? descriptor;
 
   return (
     <aside
@@ -105,20 +103,17 @@ export function SidebarNav({
       <div className={cn("mt-auto space-y-4", collapsed && "w-full")}>
         {!collapsed ? (
           <>
-            <Card className="border-primary/10 bg-linear-to-br from-white to-secondary/50 shadow-none">
-              <CardContent className="space-y-4 p-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-12 ring-4 ring-primary/10">
-                    <AvatarFallback>{nickname.slice(0, 2)}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground">{nickname}</p>
-                    <p className="text-xs leading-5 text-muted-foreground">{descriptor}</p>
-                  </div>
+            <div className="px-1 py-1">
+              <div className="flex items-center gap-2.5">
+                <Avatar className="size-12 ring-3 ring-primary/8">
+                  <AvatarFallback className="bg-[radial-gradient(circle_at_30%_30%,#edf3ff_0%,#dbe5ff_58%,#c6d5ff_100%)] text-transparent" aria-hidden="true" />
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold tracking-tight text-foreground">{nickname}</p>
+                  <p className="mt-1 text-sm leading-none text-muted-foreground">{compactDescriptor}</p>
                 </div>
-                <p className="text-sm leading-6 text-muted-foreground">{footerNote}</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             <Button variant="outline" className="w-full justify-start rounded-2xl">
               <LogOut className="size-4" />
