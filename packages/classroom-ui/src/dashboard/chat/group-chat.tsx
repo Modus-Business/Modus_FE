@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { MoreHorizontal, PencilLine, SendHorizontal, Trash2, X } from "lucide-react";
+import { ArrowUp, MoreHorizontal, PencilLine, Trash2, X } from "lucide-react";
 
 import type { GroupSummary } from "../../lib/mock-data";
 import { cn, getAvatarToneClass } from "../../lib/utils";
@@ -147,19 +147,35 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                 ) : null}
                 <div
                   className={cn(
-                    "relative w-fit max-w-[min(100%,22rem)] break-words rounded-[24px] border px-4 py-3 text-xs leading-6 shadow-none sm:max-w-[86%] sm:px-5 sm:py-4 sm:text-sm sm:leading-7 lg:px-6 lg:py-5",
-                    message.own
-                      ? "border-border/60 bg-white text-foreground sm:max-w-[72%]"
-                      : "border-border/60 bg-white text-foreground",
+                    "relative min-w-0 max-w-[calc(100%-3.25rem)] sm:max-w-[calc(100%-4.5rem)] lg:max-w-[42rem]",
                   )}
                 >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none absolute bottom-[18px] z-0 block size-5 bg-white/98 shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
+                      message.own
+                        ? "right-4 translate-x-[58%] rotate-[34deg] rounded-br-[15px] border-r border-b border-[#d6deef]"
+                        : "left-4 -translate-x-[58%] -rotate-[34deg] rounded-bl-[15px] border-l border-b border-[#d6deef]",
+                    )}
+                  />
                   <div
-                    className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs"
+                    className={cn(
+                      "relative z-10 break-words border border-[#d6deef] bg-white/98 px-4 py-3 text-xs leading-6 text-foreground shadow-[0_18px_42px_rgba(148,163,184,0.14),0_2px_8px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 sm:text-sm sm:leading-7 lg:px-6 lg:py-5",
+                      message.own ? "rounded-[26px] rounded-br-[16px]" : "rounded-[26px] rounded-bl-[16px]",
+                    )}
                   >
-                    <span className="font-semibold">{message.author}</span>
-                    <span>{message.time}</span>
+                    <div
+                      className={cn(
+                        "mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs",
+                        message.own ? "justify-end text-right" : "justify-start text-left",
+                      )}
+                    >
+                      <span className="font-semibold">{message.author}</span>
+                      <span>{message.time}</span>
+                    </div>
+                    <p className="break-words text-left">{message.content}</p>
                   </div>
-                  <p className="break-words text-left">{message.content}</p>
                 </div>
                 {message.own ? (
                   <Avatar className="mt-1 size-9 shrink-0 bg-secondary sm:size-11">
@@ -173,19 +189,24 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
             </div>
           </div>
 
-          <div className="sticky bottom-0 z-10 border-t border-border/70 bg-white/95 p-4 shadow-none backdrop-blur sm:p-5 lg:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+          <div className="sticky bottom-0 z-10 border-t border-border/70 bg-white/95 px-4 py-3 shadow-none backdrop-blur sm:px-5 sm:py-3.5 lg:px-6 lg:py-4">
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
               <Textarea
                 ref={textareaRef}
                 rows={1}
                 value={draft}
                 onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)}
                 placeholder="메시지를 입력하세요."
-                className="max-h-[360px] min-h-9 flex-1 resize-none overflow-y-auto rounded-none border-0 px-0 pt-1.5 pb-2 text-sm leading-5 shadow-none focus-visible:ring-0 sm:min-h-11 sm:pt-2 sm:pb-2.5 sm:text-[15px] sm:leading-6"
+                className="max-h-[360px] min-h-8 flex-1 resize-none overflow-y-auto rounded-none border-0 px-0 py-0.5 text-sm leading-6 shadow-none focus-visible:ring-0 sm:min-h-9 sm:text-[15px]"
               />
-              <Button size="lg" disabled={!draft.trim()} className="w-full shrink-0 sm:w-auto sm:min-w-28 sm:self-end">
-                <SendHorizontal className="size-4" />
-                전송
+              <Button
+                type="button"
+                size="icon"
+                aria-label="메시지 전송"
+                disabled={!draft.trim()}
+                className="size-10 shrink-0 rounded-full shadow-sm sm:size-11"
+              >
+                <ArrowUp className="size-4" />
               </Button>
             </div>
           </div>

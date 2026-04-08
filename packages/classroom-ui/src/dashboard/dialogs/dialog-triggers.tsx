@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import { useState } from "react";
 import { Bell, FileUp, Flag, Plus, UserPlus } from "lucide-react";
 
@@ -19,6 +20,8 @@ import {
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
+
+type TriggerButtonProps = Pick<ComponentProps<typeof Button>, "className" | "size" | "variant">;
 
 function getAssignmentBadgeVariant(status: string) {
   switch (status) {
@@ -114,11 +117,17 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
   );
 }
 
-export function NoticesDialog({ notices }: { notices: NoticeItem[] }) {
+export function NoticesDialog({
+  notices,
+  triggerProps,
+}: {
+  notices: NoticeItem[];
+  triggerProps?: TriggerButtonProps;
+}) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" {...triggerProps}>
           <Bell className="size-4" />
           공지
         </Button>
@@ -150,13 +159,19 @@ export function NoticesDialog({ notices }: { notices: NoticeItem[] }) {
   );
 }
 
-export function AssignmentSummaryDialog({ assignments }: { assignments: AssignmentSummary[] }) {
+export function AssignmentSummaryDialog({
+  assignments,
+  triggerProps,
+}: {
+  assignments: AssignmentSummary[];
+  triggerProps?: TriggerButtonProps;
+}) {
   const pendingCount = assignments.filter((assignment) => assignment.status === "제출 전").length;
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="bg-white/88">
+        <Button variant="outline" className="bg-white/88" {...triggerProps}>
           <Flag className="size-4 text-primary" />
           모둠 과제
         </Button>
@@ -204,13 +219,19 @@ export function AssignmentSummaryDialog({ assignments }: { assignments: Assignme
   );
 }
 
-export function SubmitAssignmentDialog({ className }: { className: string }) {
+export function SubmitAssignmentDialog({
+  className,
+  triggerProps,
+}: {
+  className: string;
+  triggerProps?: TriggerButtonProps;
+}) {
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
+        <Button {...triggerProps}>
           <FileUp className="size-4" />
           과제 제출
         </Button>

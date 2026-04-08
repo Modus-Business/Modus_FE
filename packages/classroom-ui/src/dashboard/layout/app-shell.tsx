@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "../../lib/utils";
-import { studentProfile, teacherProfile, type UserRole } from "../../lib/mock-data";
+import { getStudentClassroom, studentProfile, teacherProfile, type UserRole } from "../../lib/mock-data";
+import { AssignmentSummaryDialog, NoticesDialog, SubmitAssignmentDialog } from "../dialogs/dialog-triggers";
 import { SidebarNav } from "./sidebar-nav";
 import { TopHeader } from "./top-header";
 
@@ -19,6 +20,34 @@ export function AppShell({ role, children }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const profile = role === "student" ? studentProfile : teacherProfile;
+  const displayName = role === "student" ? profile.nickname : profile.realName;
+  const studentClassroomMatch = role === "student" ? pathname.match(/^\/class\/([^/]+)$/) : null;
+  const studentClassroom = studentClassroomMatch ? getStudentClassroom(decodeURIComponent(studentClassroomMatch[1])) : undefined;
+  const studentGroupLabel = studentClassroom?.group?.name.split("·")[0]?.trim();
+  const classroomHeaderActions = studentClassroom ? (
+    <>
+      <AssignmentSummaryDialog
+        assignments={studentClassroom.assignments}
+        triggerProps={{
+          size: "lg",
+          className:
+            "h-11 rounded-full border-primary/20 bg-white px-5 text-sm font-semibold text-foreground shadow-none hover:border-primary/35 hover:bg-primary/5",
+        }}
+      />
+      <NoticesDialog
+        notices={studentClassroom.notices}
+        triggerProps={{
+          size: "lg",
+          className:
+            "h-11 rounded-full border-primary/20 bg-white px-5 text-sm font-semibold text-foreground shadow-none hover:border-primary/35 hover:bg-primary/5",
+        }}
+      />
+      <SubmitAssignmentDialog
+        className={studentClassroom.name}
+        triggerProps={{ size: "lg", className: "h-11 rounded-full px-5 text-sm font-semibold shadow-[0_8px_20px_rgba(91,132,255,0.18)]" }}
+      />
+    </>
+  ) : null;
 
   useEffect(() => {
     const compactQuery = window.matchMedia("(max-width: 1279px)");
@@ -53,7 +82,7 @@ export function AppShell({ role, children }: AppShellProps) {
     };
   }, [mobileNavOpen]);
 
-  const showHeaderBrandLogo = mobileNavOpen ? false : !sidebarExpanded;
+  const showHeaderBrandLogo = !mobileNavOpen;
 
   return (
     <div
@@ -67,7 +96,7 @@ export function AppShell({ role, children }: AppShellProps) {
       <div className="hidden border-r border-border/70 bg-white/90 transition-[width] duration-300 ease-in-out lg:block">
         <SidebarNav
           role={role}
-          nickname={profile.realName}
+          nickname={displayName}
           descriptor={profile.descriptor}
           collapsed={!sidebarExpanded}
           onToggle={() => setSidebarExpanded((prev) => !prev)}
@@ -90,7 +119,7 @@ export function AppShell({ role, children }: AppShellProps) {
       >
         <SidebarNav
           role={role}
-          nickname={profile.realName}
+          nickname={displayName}
           descriptor={profile.descriptor}
           onToggle={() => setMobileNavOpen(false)}
           onNavigate={() => setMobileNavOpen(false)}
@@ -101,10 +130,21 @@ export function AppShell({ role, children }: AppShellProps) {
       <main className="flex min-h-svh min-w-0 flex-col bg-[radial-gradient(circle_at_top_left,_rgba(91,132,255,0.12),_transparent_32%),linear-gradient(180deg,#f8faff_0%,#f4f7fb_100%)]">
         <TopHeader
           role={role}
-          profileName={profile.realName}
+          profileName={displayName}
           profileDescriptor={profile.descriptor}
           onOpenMobileNav={() => setMobileNavOpen(true)}
-          showBrandLogo={showHeaderBrandLogo}
+          showBrandLogo={studentClassroom ? true : showHeaderBrandLogo}
+          classroomContext={
+            studentClassroom
+              ? {
+                  title: studentClassroom.name,
+                  subtitle: studentGroupLabel,
+                  actions: classroomHeaderActions,
+                  profileName: studentProfile.nickname,
+                  hideProfileDescriptor: true,
+                }
+              : undefined
+          }
         />
         <div className="flex min-h-0 flex-1 px-3 py-3 sm:px-4 sm:py-4 lg:px-5 lg:py-5">
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3">{children}</div>

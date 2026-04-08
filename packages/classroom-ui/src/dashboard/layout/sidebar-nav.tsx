@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback } from "../../ui/avatar";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { cn } from "../../lib/utils";
-import { BrandLogo } from "../brand/brand-logo";
 
 type DashboardRole = "student" | "teacher";
 
@@ -24,7 +23,6 @@ type SidebarNavProps = {
 
 const navConfig = {
   student: [
-    { href: "/", label: "홈", icon: House },
     { href: "/classes", label: "등록한 수업", icon: BookMarked },
     { href: "/settings", label: "설정", icon: Settings },
   ],
@@ -47,6 +45,7 @@ export function SidebarNav({
   const pathname = usePathname();
   const items = navConfig[role];
   const compactDescriptor = descriptor.split("·")[0]?.trim() ?? descriptor;
+  const showDescriptor = role !== "student";
 
   return (
     <aside
@@ -70,13 +69,10 @@ export function SidebarNav({
           >
             <Menu className="size-6" />
           </Button>
-          {!collapsed ? (
-            <>
-              <BrandLogo size="sidebar" />
-              <Badge variant="secondary" className="rounded-full px-3 py-1">
-                {role === "student" ? "수강생 워크스페이스" : "교강사 워크스페이스"}
-              </Badge>
-            </>
+          {!collapsed && role === "teacher" ? (
+            <Badge variant="secondary" className="rounded-full px-3 py-1">
+              교강사 워크스페이스
+            </Badge>
           ) : null}
         </div>
         <nav className={cn("space-y-1", collapsed && "pt-2")}>
@@ -115,7 +111,7 @@ export function SidebarNav({
                 </Avatar>
                 <div className="min-w-0">
                   <p className="truncate text-base font-semibold tracking-tight text-foreground">{nickname}</p>
-                  <p className="mt-1 truncate text-sm leading-none text-muted-foreground">{compactDescriptor}</p>
+                  {showDescriptor ? <p className="mt-1 truncate text-sm leading-none text-muted-foreground">{compactDescriptor}</p> : null}
                 </div>
               </div>
             </div>

@@ -85,7 +85,7 @@ export const studentProfile: UserProfile = {
   nickname: "모두달리기42",
   realName: "최민수",
   email: "minsu@modus.ac.kr",
-  descriptor: "수강생 · Frontend Track",
+  descriptor: "Frontend Track",
   footerNote: "오늘도 모둠 과제를 한 단계 더 정리해봐요.",
 };
 
