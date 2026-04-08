@@ -1,4 +1,4 @@
-import { ClassCard, JoinClassDialog, PageHeader, studentClassrooms, studentProfile } from "@modus/classroom-ui";
+import { ClassCard, PageHeader, studentClassrooms, studentProfile } from "@modus/classroom-ui";
 
 export default function StudentClassesPage() {
   return (
@@ -9,7 +9,6 @@ export default function StudentClassesPage() {
         description="데스크톱 기준으로 수업 카드 밀도를 높여, 클래스룸의 과목 목록처럼 탐색할 수 있게 구성했습니다."
         profileName={studentProfile.realName}
         profileDescriptor={studentProfile.descriptor}
-        actions={<JoinClassDialog />}
       />
       <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {studentClassrooms.map((classroom) => (

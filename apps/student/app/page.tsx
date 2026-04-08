@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Bell, BookOpenText, Layers3 } from "lucide-react";
 
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, ClassCard, JoinClassDialog, PageHeader, studentClassrooms, studentProfile } from "@modus/classroom-ui";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, ClassCard, PageHeader, studentClassrooms, studentProfile } from "@modus/classroom-ui";
 
 export default function StudentHomePage() {
   return (
@@ -12,7 +12,6 @@ export default function StudentHomePage() {
         description="student 앱은 수업 참여, 모둠 화면, 과제 제출 흐름을 독립된 앱으로 구성합니다."
         profileName={studentProfile.realName}
         profileDescriptor={studentProfile.descriptor}
-        actions={<JoinClassDialog />}
       />
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">

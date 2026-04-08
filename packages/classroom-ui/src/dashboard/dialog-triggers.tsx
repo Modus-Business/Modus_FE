@@ -9,13 +9,18 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 
-export function JoinClassDialog() {
+export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
+        <Button
+          variant={iconOnly ? "ghost" : "default"}
+          size={iconOnly ? "icon" : "default"}
+          className={iconOnly ? "size-11 rounded-full text-foreground hover:bg-secondary" : undefined}
+          aria-label={iconOnly ? "수업 참여" : undefined}
+        >
           <UserPlus className="size-4" />
-          수업 참여
+          {!iconOnly ? "수업 참여" : null}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -47,13 +52,18 @@ export function JoinClassDialog() {
   );
 }
 
-export function CreateClassDialog() {
+export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
+        <Button
+          variant={iconOnly ? "ghost" : "default"}
+          size={iconOnly ? "icon" : "default"}
+          className={iconOnly ? "size-11 rounded-full text-foreground hover:bg-secondary" : undefined}
+          aria-label={iconOnly ? "수업 만들기" : undefined}
+        >
           <Plus className="size-4" />
-          수업 만들기
+          {!iconOnly ? "수업 만들기" : null}
         </Button>
       </DialogTrigger>
       <DialogContent>
