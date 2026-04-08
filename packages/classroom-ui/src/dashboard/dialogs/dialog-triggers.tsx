@@ -126,7 +126,6 @@ export function NoticesDialog({ notices }: { notices: NoticeItem[] }) {
       <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>공지</DialogTitle>
-          <DialogDescription>클래스 공지사항을 팝업 형태로 확인합니다.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           {notices.map((notice) => (

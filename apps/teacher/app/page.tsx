@@ -14,13 +14,13 @@ export default function TeacherHomePage() {
         actions={<CreateClassDialog />}
       />
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
         <Card className="bg-white/95">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><LayoutTemplate className="size-5 text-primary" />내가 만든 수업</CardTitle>
+            <CardTitle className="flex items-center gap-2 break-keep"><LayoutTemplate className="size-5 text-primary" />내가 만든 수업</CardTitle>
             <CardDescription>생성한 클래스와 코호트, 팀 수를 홈 화면에서 바로 확인합니다.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
+          <CardContent className="grid gap-4 sm:grid-cols-2">
             {teacherClassrooms.map((classroom) => (
               <ClassCard
                 key={classroom.id}
@@ -50,7 +50,7 @@ export default function TeacherHomePage() {
             </CardContent>
           </Card>
           <Card className="bg-white/95">
-            <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2"><Bell className="size-5 text-primary" />최근 공지</CardTitle>
                 <CardDescription>교강사 홈에서도 최신 공지 흐름을 요약합니다.</CardDescription>
@@ -60,7 +60,7 @@ export default function TeacherHomePage() {
             <CardContent className="space-y-3">
               {teacherClassrooms[0].notices.slice(0, 3).map((notice) => (
                 <div key={notice.id} className="rounded-3xl border border-border/70 bg-background/70 p-4">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                     <p className="font-medium text-foreground">{notice.title}</p>
                     <span className="text-xs text-muted-foreground">{notice.date}</span>
                   </div>

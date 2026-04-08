@@ -9,24 +9,24 @@ export default function TeacherClassesPage() {
         profileName={teacherProfile.nickname}
         profileDescriptor={teacherProfile.descriptor}
         actions={<CreateClassDialog />}
-        className="border-b-0 px-6 py-6 lg:px-8 lg:py-7"
+        className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />
       <section className="bg-background/60 p-4 sm:p-5 lg:p-6">
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        {teacherClassrooms.map((classroom) => (
-          <ClassCard
-            key={classroom.id}
-            href={`/class/${classroom.id}`}
-            name={classroom.name}
-            code={classroom.code}
-            schedule={classroom.schedule}
-            description={classroom.description}
-            metaLabel="코호트"
-            metaValue={classroom.cohort}
-            footerLabel="학생 수"
-            footerValue={`${classroom.studentCount}명`}
-          />
-        ))}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {teacherClassrooms.map((classroom) => (
+            <ClassCard
+              key={classroom.id}
+              href={`/class/${classroom.id}`}
+              name={classroom.name}
+              code={classroom.code}
+              schedule={classroom.schedule}
+              description={classroom.description}
+              metaLabel="코호트"
+              metaValue={classroom.cohort}
+              footerLabel="학생 수"
+              footerValue={`${classroom.studentCount}명`}
+            />
+          ))}
         </div>
       </section>
     </div>
