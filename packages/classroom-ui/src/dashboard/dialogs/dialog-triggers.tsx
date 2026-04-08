@@ -78,6 +78,8 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
 }
 
 export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
+  const [className, setClassName] = useState("");
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -94,23 +96,24 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>새 수업 만들기</DialogTitle>
-          <DialogDescription>수업 명과 팀 코드를 만드는 흐름을 우선 퍼블리싱합니다.</DialogDescription>
+          <DialogDescription>수업명만 입력하면 새 수업을 만들 수 있도록 단순화했습니다.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
-            <Label htmlFor="class-name">수업 명</Label>
-            <Input id="class-name" placeholder="예: 프로덕트 스튜디오" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="team-code">팀 코드 생성</Label>
-            <Input id="team-code" placeholder="자동 생성 예정" />
+            <Label htmlFor="class-name">수업명</Label>
+            <Input
+              id="class-name"
+              value={className}
+              onChange={(event) => setClassName(event.target.value)}
+              placeholder="예: 프로덕트 스튜디오"
+            />
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">취소</Button>
           </DialogClose>
-          <Button>생성하기</Button>
+          <Button disabled={className.trim().length === 0}>생성하기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

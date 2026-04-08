@@ -12,6 +12,7 @@ type TopHeaderProps = {
   role: UserRole;
   profileName: string;
   profileDescriptor: string;
+  hideProfileDescriptor?: boolean;
   onOpenMobileNav?: () => void;
   showBrandLogo?: boolean;
   classroomContext?: {
@@ -28,6 +29,7 @@ export function TopHeader({
   role,
   profileName,
   profileDescriptor,
+  hideProfileDescriptor = false,
   onOpenMobileNav,
   showBrandLogo = true,
   classroomContext,
@@ -35,13 +37,14 @@ export function TopHeader({
   const effectiveProfileName = classroomContext?.profileName ?? profileName;
   const effectiveProfileDescriptor = classroomContext?.profileDescriptor ?? profileDescriptor;
   const compactDescriptor = effectiveProfileDescriptor.split("·")[0]?.trim() ?? effectiveProfileDescriptor;
-  const showProfileDescriptor = role !== "student" && !classroomContext?.hideProfileDescriptor && compactDescriptor.length > 0;
+  const useCompactProfile = role === "student" || hideProfileDescriptor || Boolean(classroomContext);
+  const showProfileDescriptor = !useCompactProfile && !classroomContext?.hideProfileDescriptor && compactDescriptor.length > 0;
   const shouldShowBrandLogo = classroomContext ? true : showBrandLogo;
   const profileLinkClassName = classroomContext ? "gap-2.5 rounded-xl px-0.5" : "gap-3 rounded-2xl px-1";
   const avatarClassName = classroomContext
     ? "size-9 ring-1 ring-primary/10 transition-all duration-150 group-hover:ring-primary/20 group-hover:shadow-[0_6px_14px_rgba(91,132,255,0.1)] sm:size-10"
     : "size-10 ring-2 ring-primary/10 transition-all duration-150 group-hover:ring-primary/20 group-hover:shadow-[0_8px_20px_rgba(91,132,255,0.12)] sm:size-11";
-  const profileNameClassName = role === "student" || classroomContext
+  const profileNameClassName = useCompactProfile
     ? "truncate text-sm font-semibold text-foreground transition-colors duration-150 group-hover:text-primary"
     : "truncate text-base font-semibold text-foreground transition-colors duration-150 group-hover:text-primary";
   const profileDescriptorClassName = classroomContext

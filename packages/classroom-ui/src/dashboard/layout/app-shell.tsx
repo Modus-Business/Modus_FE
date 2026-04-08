@@ -20,7 +20,8 @@ export function AppShell({ role, children }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const profile = role === "student" ? studentProfile : teacherProfile;
-  const displayName = role === "student" ? profile.nickname : profile.realName;
+  const sidebarDisplayName = role === "student" ? profile.nickname : profile.realName;
+  const headerDisplayName = role === "student" ? profile.nickname : profile.realName;
   const studentClassroomMatch = role === "student" ? pathname.match(/^\/class\/([^/]+)$/) : null;
   const studentClassroom = studentClassroomMatch ? getStudentClassroom(decodeURIComponent(studentClassroomMatch[1])) : undefined;
   const studentGroupLabel = studentClassroom?.group?.name.split("·")[0]?.trim();
@@ -96,7 +97,7 @@ export function AppShell({ role, children }: AppShellProps) {
       <div className="hidden border-r border-border/70 bg-white/90 transition-[width] duration-300 ease-in-out lg:block">
         <SidebarNav
           role={role}
-          nickname={displayName}
+          nickname={sidebarDisplayName}
           descriptor={profile.descriptor}
           collapsed={!sidebarExpanded}
           onToggle={() => setSidebarExpanded((prev) => !prev)}
@@ -119,7 +120,7 @@ export function AppShell({ role, children }: AppShellProps) {
       >
         <SidebarNav
           role={role}
-          nickname={displayName}
+          nickname={sidebarDisplayName}
           descriptor={profile.descriptor}
           onToggle={() => setMobileNavOpen(false)}
           onNavigate={() => setMobileNavOpen(false)}
@@ -130,8 +131,9 @@ export function AppShell({ role, children }: AppShellProps) {
       <main className="flex min-h-svh min-w-0 flex-col bg-[radial-gradient(circle_at_top_left,_rgba(91,132,255,0.12),_transparent_32%),linear-gradient(180deg,#f8faff_0%,#f4f7fb_100%)]">
         <TopHeader
           role={role}
-          profileName={displayName}
+          profileName={headerDisplayName}
           profileDescriptor={profile.descriptor}
+          hideProfileDescriptor={role === "teacher"}
           onOpenMobileNav={() => setMobileNavOpen(true)}
           showBrandLogo={studentClassroom ? true : showHeaderBrandLogo}
           classroomContext={

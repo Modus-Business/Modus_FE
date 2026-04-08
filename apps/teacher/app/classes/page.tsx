@@ -4,10 +4,11 @@ export default function TeacherClassesPage() {
   return (
     <div className="-mx-3 -my-3 flex flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5">
       <PageHeader
-        title="운영 중인 클래스 목록을 카드형으로 정리했습니다"
-        description="코드, 인원 수, 모둠 수, 설명을 한 번에 노출해 교강사가 수업 상태를 빠르게 파악할 수 있게 구성합니다."
-        profileName={teacherProfile.nickname}
+        title="만든 수업을 한눈에 보고 바로 관리할 수 있습니다"
+        description="수업 코드, 학생 수, 모둠 수와 수업 설명을 빠르게 확인하고 필요한 수업으로 바로 이동해 보세요."
+        profileName={teacherProfile.realName}
         profileDescriptor={teacherProfile.descriptor}
+        showProfile={false}
         actions={<CreateClassDialog />}
         className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />

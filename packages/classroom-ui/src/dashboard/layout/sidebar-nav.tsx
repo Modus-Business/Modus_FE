@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookMarked, House, Layers3, LogOut, Menu, Settings } from "lucide-react";
+import { BookMarked, Layers3, LogOut, Menu, Settings } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "../../ui/avatar";
-import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { cn } from "../../lib/utils";
 
@@ -27,7 +26,6 @@ const navConfig = {
     { href: "/settings", label: "설정", icon: Settings },
   ],
   teacher: [
-    { href: "/", label: "홈", icon: House },
     { href: "/classes", label: "만든 수업", icon: Layers3 },
     { href: "/settings", label: "설정", icon: Settings },
   ],
@@ -69,15 +67,10 @@ export function SidebarNav({
           >
             <Menu className="size-6" />
           </Button>
-          {!collapsed && role === "teacher" ? (
-            <Badge variant="secondary" className="rounded-full px-3 py-1">
-              교강사 워크스페이스
-            </Badge>
-          ) : null}
         </div>
         <nav className={cn("space-y-1", collapsed && "pt-2")}>
           {items.map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
             return (
               <Button
