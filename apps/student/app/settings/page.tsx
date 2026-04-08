@@ -17,15 +17,10 @@ export default function StudentSettingsPage() {
         <Card className="bg-white/95">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><UserRound className="size-5 text-primary" />프로필 정보</CardTitle>
-            <CardDescription>수업에서 사용되는 기본 정보와 공개 범위를 확인할 수 있어요.</CardDescription>
+            <CardDescription>닉네임은 각 수업의 모둠마다 지정되고, 본명은 교강사에게만 보입니다</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4">
-              <p className="text-sm font-medium text-foreground">닉네임</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{studentProfile.nickname}</p>
-              <p className="mt-2 text-xs text-muted-foreground">모둠 활동 화면에서 표시되는 이름이에요.</p>
-            </div>
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4">
+            <div className="rounded-lg border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-medium text-foreground">본명</p>
               <p className="mt-1 text-base font-semibold text-foreground">{studentProfile.realName}</p>
               <Badge variant="secondary" className="mt-2">교강사만 보기</Badge>
@@ -38,7 +33,7 @@ export default function StudentSettingsPage() {
             <CardDescription>계정 인증 상태를 간단히 확인할 수 있어요.</CardDescription>
           </CardHeader>
           <CardContent className="text-sm leading-6 text-muted-foreground">
-            <div className="rounded-[24px] border border-border/70 bg-background/80 p-4">
+            <div className="rounded-lg border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-medium text-foreground">이메일 인증</p>
               <Badge className="mt-2">인증 완료</Badge>
               <p className="mt-3 text-xs text-muted-foreground">현재 계정은 이메일 인증이 완료된 상태예요.</p>
