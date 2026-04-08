@@ -6,8 +6,8 @@ export default function TeacherSettingsPage() {
   return (
     <>
       <PageHeader
-        title="계정 정보와 수업 운영 설정을 한곳에서 관리할 수 있습니다"
-        description="프로필 정보, 공지 기본값, 수업 코드 공유 정책을 확인하고 내 수업 운영 방식에 맞게 정리해 보세요."
+        title="계정 정보와 공지 설정을 한곳에서 확인할 수 있습니다"
+        description="교강사 이름과 이메일, 공지 노출 범위를 확인하고 수업 운영에 필요한 기본 정보를 정리해 보세요."
         profileName={teacherProfile.realName}
         profileDescriptor={teacherProfile.descriptor}
         showProfile={false}
