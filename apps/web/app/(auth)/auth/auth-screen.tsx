@@ -336,9 +336,9 @@ function SignupCard({
 
           {step === "profile" ? (
             <div className="space-y-4">
-              <div className="flex flex-col gap-2 rounded-[18px] bg-[#f8faff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="flex flex-col gap-2 rounded-[18px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{role === "student" ? "수강생 계정" : "교강사 계정"}</p>
+                  <p className="text-base font-semibold text-foreground sm:text-lg">{role === "student" ? "수강생 계정" : "교강사 계정"}</p>
                 </div>
                 <button
                   type="button"
