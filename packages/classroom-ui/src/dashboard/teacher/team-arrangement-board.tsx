@@ -230,25 +230,29 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
             <div className="mt-4 space-y-2">
               {unassignedStudents.length > 0 ? (
                 unassignedStudents.map((student) => (
-                  <button
+                  <div
                     key={student.id}
-                    type="button"
                     draggable
                     data-testid={`unassigned-member-${student.id}`}
                     onDragStart={(event) => {
                       event.dataTransfer.setData("text/student-id", student.id);
                       event.dataTransfer.effectAllowed = "move";
                     }}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-white/95 px-3 py-3 text-left shadow-none"
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border/70 bg-white/95 px-3 py-3 text-left shadow-none"
                   >
-                    <GripVertical className="size-4 text-muted-foreground" />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <GripVertical className="size-4 text-muted-foreground" />
+                      <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
-                        {student.studentCode ? <span className="text-[11px] font-medium text-muted-foreground">{student.studentCode}</span> : null}
                       </div>
                     </div>
-                  </button>
+                    <span className="group relative inline-flex shrink-0 cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary">
+                      email
+                      <span className="pointer-events-none absolute top-[calc(100%+0.55rem)] right-0 z-30 w-max max-w-[220px] translate-y-1 rounded-2xl border border-sky-100 bg-white/98 px-3 py-2 text-xs font-medium normal-case text-foreground opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.12)] transition duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+                        {student.email ?? "이메일 정보 없음"}
+                      </span>
+                    </span>
+                  </div>
                 ))
               ) : (
                 <div className="rounded-2xl bg-white/80 px-4 py-5 text-sm text-muted-foreground">모든 학생이 모둠에 배치되었습니다.</div>
@@ -312,25 +316,29 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                       const student = rosterById.get(memberId);
                       if (!student) return null;
                       return (
-                        <button
+                        <div
                           key={student.id}
-                          type="button"
                           draggable
                           data-testid={`team-member-${team.id}-${student.id}`}
                           onDragStart={(event) => {
                             event.dataTransfer.setData("text/student-id", student.id);
                             event.dataTransfer.effectAllowed = "move";
                           }}
-                          className="flex w-full items-center gap-3 rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-left shadow-none"
+                          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-left shadow-none"
                         >
-                          <GripVertical className="size-4 text-muted-foreground" />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <GripVertical className="size-4 text-muted-foreground" />
+                            <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
-                              {student.studentCode ? <span className="text-[11px] font-medium text-muted-foreground">{student.studentCode}</span> : null}
                             </div>
                           </div>
-                        </button>
+                          <span className="group relative inline-flex shrink-0 cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary">
+                            email
+                            <span className="pointer-events-none absolute top-[calc(100%+0.55rem)] right-0 z-30 w-max max-w-[220px] translate-y-1 rounded-2xl border border-sky-100 bg-white/98 px-3 py-2 text-xs font-medium normal-case text-foreground opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.12)] transition duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+                              {student.email ?? "이메일 정보 없음"}
+                            </span>
+                          </span>
+                        </div>
                       );
                     })
                   ) : (
@@ -380,9 +388,20 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-foreground">{student.realName}</p>
-                      {student.studentCode ? <span className="text-[11px] font-medium text-muted-foreground">{student.studentCode}</span> : null}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          className="group inline-flex cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary outline-none transition-colors hover:border-primary/30 hover:bg-primary/10 focus-visible:border-primary/40 focus-visible:bg-primary/10"
+                          aria-label={`${student.realName} 이메일 보기`}
+                        >
+                          email
+                          <span className="pointer-events-none absolute top-[calc(100%+0.55rem)] left-1/2 z-30 w-max max-w-[220px] -translate-x-1/2 translate-y-1 rounded-2xl border border-sky-100 bg-white/98 px-3 py-2 text-xs font-medium normal-case text-foreground opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.12)] transition duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+                            {student.email ?? "이메일 정보 없음"}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
