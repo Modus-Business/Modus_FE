@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { GripVertical, PencilLine, Plus, Trash2, UsersRound } from "lucide-react";
+import { Check, ChevronDown, GripVertical, PencilLine, Plus, Trash2, UsersRound } from "lucide-react";
 
-import type { MemberProfile, TeacherClassroom } from "../../lib/mock-data";
+import type { TeacherClassroom } from "../../lib/mock-data";
 import { cn } from "../../lib/utils";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
@@ -22,23 +22,13 @@ type TeamNameDialogState =
   | { mode: "rename"; teamId: string }
   | null;
 
-function getStatusTone(status: MemberProfile["status"]) {
-  switch (status) {
-    case "online":
-      return "bg-emerald-500";
-    case "focus":
-      return "bg-amber-500";
-    default:
-      return "bg-slate-300";
-  }
-}
-
 export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
   const [teams, setTeams] = useState<ArrangementTeam[]>(() => classroom.teams.map((team) => ({ ...team, memberIds: [...team.memberIds] })));
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null);
   const [pendingDeleteTeamId, setPendingDeleteTeamId] = useState<string | null>(null);
   const [teamNameDialog, setTeamNameDialog] = useState<TeamNameDialogState>(null);
   const [teamNameDraft, setTeamNameDraft] = useState("");
+  const [openStudentPickerId, setOpenStudentPickerId] = useState<string | null>(null);
 
   const rosterById = useMemo(
     () => new Map(classroom.roster.map((student) => [student.id, student])),
@@ -68,6 +58,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
       );
     });
     setActiveDropZone(null);
+    setOpenStudentPickerId((current) => (current === studentId ? null : current));
   };
 
   const createGroup = (teamName: string) => {
@@ -251,7 +242,6 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                     className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-white/95 px-3 py-3 text-left shadow-none"
                   >
                     <GripVertical className="size-4 text-muted-foreground" />
-                    <div className={cn("size-2.5 rounded-full", getStatusTone(student.status))} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
@@ -334,7 +324,6 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                           className="flex w-full items-center gap-3 rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-left shadow-none"
                         >
                           <GripVertical className="size-4 text-muted-foreground" />
-                          <div className={cn("size-2.5 rounded-full", getStatusTone(student.status))} />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
@@ -373,23 +362,18 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
       <Card className="bg-white/95">
         <CardHeader>
           <CardTitle>전체 학생</CardTitle>
-          <CardDescription>학생 전체를 확인하면서 현재 배치된 모둠과 역할을 함께 볼 수 있습니다.</CardDescription>
+          <CardDescription>학생 전체를 확인하면서 현재 배치된 모둠을 보고 바로 변경할 수 있습니다.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {classroom.roster.map((student) => {
             const assignedTeam = teams.find((team) => team.memberIds.includes(student.id));
             const assignedTeamLabel = assignedTeam ? assignedTeam.name.split("·")[0]?.trim() ?? assignedTeam.name : "미배치";
+            const pickerOpen = openStudentPickerId === student.id;
             return (
-              <button
+              <div
                 key={student.id}
-                type="button"
-                draggable
                 data-testid={`student-card-${student.id}`}
-                onDragStart={(event) => {
-                  event.dataTransfer.setData("text/student-id", student.id);
-                  event.dataTransfer.effectAllowed = "move";
-                }}
-                className="rounded-[24px] border border-border/70 bg-background/70 px-4 py-4 text-left shadow-none transition-transform hover:-translate-y-0.5"
+                className="rounded-[24px] border border-border/70 bg-background/70 px-4 py-4 text-left shadow-none"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -398,15 +382,50 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                       {student.studentCode ? <span className="text-[11px] font-medium text-muted-foreground">{student.studentCode}</span> : null}
                     </div>
                   </div>
-                  <div className={cn("mt-1 size-2.5 rounded-full", getStatusTone(student.status))} />
                 </div>
                 <div className="mt-4 flex items-center justify-between gap-2">
                   <Badge variant={assignedTeam ? "secondary" : "outline"} className="rounded-full px-3 py-1">
                     {assignedTeamLabel}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">드래그해서 이동</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full px-3 text-xs text-muted-foreground"
+                    onClick={() => setOpenStudentPickerId((current) => (current === student.id ? null : student.id))}
+                    aria-label={`${student.realName} 모둠 이동`}
+                  >
+                    모둠 이동
+                    <ChevronDown className={cn("size-4 transition-transform", pickerOpen && "rotate-180")} />
+                  </Button>
                 </div>
-              </button>
+                {pickerOpen ? (
+                  <div className="mt-3 space-y-2 rounded-2xl border border-border/70 bg-white/90 p-2">
+                    {teams.length > 0 ? (
+                      teams.map((team) => {
+                        const teamLabel = team.name.split("·")[0]?.trim() ?? team.name;
+                        const isCurrentTeam = assignedTeam?.id === team.id;
+                        return (
+                          <button
+                            key={team.id}
+                            type="button"
+                            className={cn(
+                              "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors",
+                              isCurrentTeam ? "bg-secondary text-foreground" : "hover:bg-accent hover:text-accent-foreground",
+                            )}
+                            onClick={() => moveStudent(student.id, team.id)}
+                          >
+                            <span>{teamLabel}</span>
+                            {isCurrentTeam ? <Check className="size-4 text-primary" /> : null}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p className="px-3 py-2 text-sm text-muted-foreground">먼저 모둠을 생성해 주세요.</p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
             );
           })}
         </CardContent>
