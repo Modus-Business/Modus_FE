@@ -59,7 +59,7 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
   return (
     <Card
       className={cn(
-        "flex h-full min-h-[32rem] flex-col overflow-hidden bg-white/95 xl:min-h-0",
+        "flex h-full min-h-[28rem] flex-col overflow-hidden bg-white/95 sm:min-h-[32rem] xl:min-h-0",
         className,
       )}
     >
@@ -72,19 +72,19 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
       <CardContent className="flex min-h-0 flex-1 p-0">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(249,251,255,0.96)_0%,rgba(244,247,252,0.96)_100%)]">
           <div className="flex-1 overflow-y-auto">
-            <div className="space-y-4 p-3 sm:p-6 lg:space-y-5 lg:p-7">
+            <div className="space-y-4 p-3 sm:p-5 lg:space-y-5 lg:p-7">
             {group.messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  "group relative -mx-3 flex items-start gap-2 px-3 py-2 transition-colors sm:-mx-6 sm:gap-3 sm:px-6 lg:-mx-7 lg:px-7",
+                  "group relative -mx-3 flex items-start gap-2 px-3 py-2 transition-colors sm:-mx-5 sm:gap-3 sm:px-5 lg:-mx-7 lg:px-7",
                   message.own ? "justify-end" : "justify-start",
                   message.id !== group.messages[0]?.id ? "mt-3 sm:mt-4 lg:mt-5" : "",
                   openMenuId === message.id ? "bg-slate-950/[0.04]" : "hover:bg-slate-950/[0.04]",
                 )}
               >
                 {message.own ? (
-                  <div data-message-menu-root="true" className="absolute top-1 right-1 z-20 sm:top-2 sm:right-6 lg:right-7">
+                  <div data-message-menu-root="true" className="absolute top-1 right-1 z-20 sm:top-2 sm:right-5 lg:right-7">
                     <button
                       type="button"
                       aria-label="메시지 메뉴"
@@ -189,7 +189,7 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
             </div>
           </div>
 
-          <div className="sticky bottom-0 z-10 border-t border-border/70 bg-white/95 px-4 py-3 shadow-none backdrop-blur sm:px-5 sm:py-3.5 lg:px-6 lg:py-4">
+          <div className="sticky bottom-0 z-10 border-t border-border/70 bg-white/95 px-3.5 py-3 shadow-none backdrop-blur sm:px-5 sm:py-3.5 lg:px-6 lg:py-4">
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
               <Textarea
                 ref={textareaRef}

@@ -45,7 +45,7 @@ export function PageHeader({
             {eyebrow ? <span className="font-medium text-primary">{eyebrow}</span> : null}
           </div>
           <div className="min-w-0">
-            <h2 className="break-keep text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem] lg:text-[2rem] lg:leading-tight">
+            <h2 className="break-keep text-xl font-semibold tracking-tight text-foreground sm:text-[1.75rem] lg:text-[2rem] lg:leading-tight">
               {title}
             </h2>
             {description ? (
@@ -55,7 +55,7 @@ export function PageHeader({
         </div>
         <div className="flex w-full flex-col gap-3 lg:w-auto lg:max-w-[42rem] lg:items-end">
           {actions ? (
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start lg:justify-end [&>*]:w-full sm:[&>*]:w-auto">
               {actions}
             </div>
           ) : null}

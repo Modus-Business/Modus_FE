@@ -53,34 +53,34 @@ export function TopHeader({
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/70 bg-white/92 backdrop-blur">
-      <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 sm:min-h-20 sm:px-6 sm:py-4 lg:px-8">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+      <div className="flex min-h-16 items-start justify-between gap-3 px-3 py-3 sm:min-h-20 sm:items-center sm:gap-4 sm:px-5 sm:py-4 lg:px-8">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="size-10 rounded-full text-foreground hover:bg-secondary lg:hidden"
+            className="mt-0.5 size-10 shrink-0 rounded-full text-foreground hover:bg-secondary sm:mt-0 lg:hidden"
             aria-label="메뉴 열기"
             onClick={onOpenMobileNav}
           >
             <Menu className="size-5" />
           </Button>
           {classroomContext ? (
-            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               {shouldShowBrandLogo ? (
                 <Link
                   href="/"
                   aria-label="홈으로 이동"
                   className="shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
                 >
-                  <BrandLogo size="header" className="h-7 max-w-[112px] sm:h-8 sm:max-w-[124px]" />
+                  <BrandLogo size="header" className="h-6 max-w-[104px] sm:h-8 sm:max-w-[124px]" />
                 </Link>
               ) : null}
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0">
-                <p className="truncate text-base font-semibold tracking-tight text-foreground sm:text-lg">
+                <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-lg">
                   {classroomContext.title}
                   {classroomContext.subtitle ? (
-                    <span className="ml-2 text-sm font-medium text-muted-foreground sm:text-base">/ {classroomContext.subtitle}</span>
+                    <span className="ml-1.5 text-xs font-medium text-muted-foreground sm:ml-2 sm:text-base">/ {classroomContext.subtitle}</span>
                   ) : null}
                 </p>
               </div>
@@ -96,9 +96,9 @@ export function TopHeader({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-2.5 self-center sm:gap-4">
           {classroomContext ? (
-            classroomContext.actions ? <div className="hidden items-center gap-3 xl:flex">{classroomContext.actions}</div> : null
+            classroomContext.actions ? <div className="hidden items-center gap-2.5 xl:flex">{classroomContext.actions}</div> : null
           ) : role === "student" ? (
             <JoinClassDialog iconOnly />
           ) : (
@@ -116,7 +116,7 @@ export function TopHeader({
                   {effectiveProfileName.slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
-            <div className="hidden min-w-0 sm:block">
+            <div className="hidden min-w-0 md:block">
               <p className={profileNameClassName}>{effectiveProfileName}</p>
               {showProfileDescriptor ? (
                 <p className={profileDescriptorClassName}>{compactDescriptor}</p>
@@ -126,7 +126,7 @@ export function TopHeader({
         </div>
       </div>
       {classroomContext?.actions ? (
-        <div className="flex gap-3 overflow-x-auto px-4 pb-3 sm:px-6 xl:hidden [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2.5 overflow-x-auto px-3 pb-3 sm:px-5 xl:hidden [&::-webkit-scrollbar]:hidden">
           {classroomContext.actions}
         </div>
       ) : null}

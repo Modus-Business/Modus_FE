@@ -116,7 +116,7 @@ export function AppShell({ role, children }: AppShellProps) {
 
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[min(88vw,320px)] -translate-x-full border-r border-border/70 bg-white/95 shadow-[0_20px_60px_rgba(15,23,42,0.18)] transition-transform duration-300 ease-in-out lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[min(84vw,320px)] max-w-[20rem] -translate-x-full border-r border-border/70 bg-white/95 shadow-[0_20px_60px_rgba(15,23,42,0.18)] transition-transform duration-300 ease-in-out lg:hidden",
           mobileNavOpen && "translate-x-0",
         )}
       >
@@ -155,8 +155,8 @@ export function AppShell({ role, children }: AppShellProps) {
               : undefined
           }
         />
-        <div className="flex min-h-0 flex-1 px-3 py-3 sm:px-4 sm:py-4 lg:px-5 lg:py-5">
-          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3">{children}</div>
+        <div className="flex min-h-0 flex-1 px-2.5 py-2.5 sm:px-4 sm:py-4 lg:px-5 lg:py-5 xl:px-6">
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2.5 sm:gap-3 lg:gap-4">{children}</div>
         </div>
       </main>
     </div>

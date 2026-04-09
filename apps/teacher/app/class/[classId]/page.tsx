@@ -14,7 +14,7 @@ export default async function TeacherClassPage({ params }: TeacherClassPageProps
   if (!classroom) notFound();
 
   return (
-    <div className="-mx-3 -my-3 flex flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5">
+    <div className="-mx-2.5 -my-2.5 flex flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5 xl:-mx-6 xl:-my-6">
       <PageHeader
         title={classroom.name}
         profileName={teacherProfile.realName}
@@ -24,14 +24,14 @@ export default async function TeacherClassPage({ params }: TeacherClassPageProps
         className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />
 
-      <section className="bg-background/60 p-4 sm:p-5 lg:p-6">
+      <section className="bg-background/60 p-3 sm:p-5 lg:p-6">
           <Card className="bg-white/95">
             <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2"><UsersRound className="size-5 text-primary" />모둠 현황</CardTitle>
                 <CardDescription>각 모둠의 이름, 제출 여부, 구성원 수를 요약 카드로 보여줍니다.</CardDescription>
               </div>
-              <Button asChild variant="outline" className="shrink-0">
+              <Button asChild variant="outline" className="h-11 shrink-0">
                 <Link href={`/class/${classId}/groups`}>모둠 배치하기</Link>
               </Button>
             </CardHeader>

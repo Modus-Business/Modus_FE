@@ -238,15 +238,15 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
             <CardTitle className="flex items-center gap-2"><UsersRound className="size-5 text-primary" />모둠 배치</CardTitle>
             <CardDescription>학생을 드래그해서 원하는 모둠에 배치하고, 필요하면 새 모둠을 추가해 보세요.</CardDescription>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span>전체 {classroom.roster.length}명</span>
             <span>미배치 {unassignedStudents.length}명</span>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <CardContent className="grid gap-4 2xl:grid-cols-[280px_minmax(0,1fr)]">
           <div
             className={cn(
-              "rounded-[28px] border border-dashed border-border/80 bg-background/80 p-4 transition-colors xl:sticky xl:top-24 xl:max-h-[calc(100svh-9rem)] xl:self-start xl:overflow-y-auto",
+              "rounded-[28px] border border-dashed border-border/80 bg-background/80 p-4 transition-colors 2xl:sticky 2xl:top-24 2xl:max-h-[calc(100svh-9rem)] 2xl:self-start 2xl:overflow-y-auto",
               activeDropZone === "unassigned" && "border-primary/50 bg-primary/5",
             )}
             data-testid="unassigned-dropzone"
@@ -396,7 +396,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               type="button"
               onClick={openCreateGroupDialog}
               data-testid="add-group-button"
-              className="flex min-h-[240px] items-center justify-center rounded-[28px] border border-dashed border-primary/30 bg-primary/5 text-primary transition-colors hover:border-primary/50 hover:bg-primary/10"
+              className="flex min-h-[200px] items-center justify-center rounded-[28px] border border-dashed border-primary/30 bg-primary/5 px-6 py-8 text-primary transition-colors hover:border-primary/50 hover:bg-primary/10 sm:min-h-[220px] lg:min-h-[240px]"
             >
               <span className="flex flex-col items-center gap-3">
                 <span className="flex size-14 items-center justify-center rounded-full bg-white shadow-none">
@@ -414,7 +414,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
           <CardTitle>전체 학생</CardTitle>
           <CardDescription>학생 전체를 확인하면서 현재 배치된 모둠을 보고 바로 변경할 수 있습니다.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {classroom.roster.map((student) => {
             const assignedTeam = teams.find((team) => team.memberIds.includes(student.id));
             const assignedTeamLabel = assignedTeam ? assignedTeam.name.split("·")[0]?.trim() ?? assignedTeam.name : "미배치";
@@ -447,7 +447,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center justify-between gap-2">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                   <Badge variant={assignedTeam ? "secondary" : "outline"} className="rounded-full px-3 py-1">
                     {assignedTeamLabel}
                   </Badge>
@@ -455,7 +455,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-8 rounded-full px-3 text-xs text-muted-foreground"
+                    className="h-9 rounded-full px-3 text-xs text-muted-foreground"
                     onClick={() => setOpenStudentPickerId((current) => (current === student.id ? null : student.id))}
                     aria-label={`${student.realName} 모둠 이동`}
                   >
@@ -464,7 +464,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                   </Button>
                 </div>
                 {pickerOpen ? (
-                  <div className="absolute right-4 left-4 top-[calc(100%-1.25rem)] space-y-2 rounded-2xl border border-border/70 bg-white/95 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
+                  <div className="absolute right-4 left-4 top-[calc(100%-0.5rem)] space-y-2 rounded-2xl border border-border/70 bg-white/95 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
                     {teams.length > 0 ? (
                       teams.map((team) => {
                         const teamLabel = team.name.split("·")[0]?.trim() ?? team.name;

@@ -4,7 +4,7 @@ import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, PageH
 
 export default function StudentSettingsPage() {
   return (
-    <div className="-mx-3 -my-3 flex flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5">
+    <div className="-mx-2.5 -my-2.5 flex flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5 xl:-mx-6 xl:-my-6">
       <PageHeader
         title="설정"
         description=""
@@ -13,7 +13,7 @@ export default function StudentSettingsPage() {
         showProfile={false}
         className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="grid gap-3 bg-background/60 p-3 sm:gap-4 sm:p-5 lg:p-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card className="bg-white/95">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><UserRound className="size-5 text-primary" />프로필 정보</CardTitle>

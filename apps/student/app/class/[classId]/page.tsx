@@ -17,7 +17,7 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
   if (!classroom) notFound();
 
   return (
-    <div className="-mx-3 -my-3 flex min-h-0 flex-1 flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5">
+    <div className="-mx-2.5 -my-2.5 flex min-h-0 flex-1 flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5 xl:-mx-6 xl:-my-6">
       {!classroom.group ? (
         <div>
           <EmptyState
@@ -26,7 +26,7 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
           />
         </div>
       ) : (
-        <section className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(236px,264px)] xl:items-stretch">
+        <section className="grid min-h-0 flex-1 gap-3 bg-background/40 p-3 sm:gap-4 sm:p-4 lg:p-5 xl:grid-cols-[minmax(0,1fr)_minmax(236px,264px)] xl:items-stretch xl:p-6">
           <div className="min-h-0 min-w-0">
             <GroupChat group={classroom.group} showHeader={false} className="h-full min-h-0" />
           </div>

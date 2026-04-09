@@ -48,13 +48,13 @@ export function SidebarNav({
   return (
     <aside
       className={cn(
-        "sticky top-0 flex min-h-svh w-full flex-col bg-sidebar py-4 transition-[padding] duration-300 ease-in-out sm:py-6",
-        collapsed ? "items-center px-3" : "px-4 sm:px-5",
+        "sticky top-0 flex min-h-svh w-full flex-col bg-sidebar py-4 transition-[padding] duration-300 ease-in-out sm:py-5",
+        collapsed ? "items-center px-2.5 sm:px-3" : "px-3.5 sm:px-4",
         className,
       )}
     >
-      <div className="space-y-5">
-        <div className={cn("sticky top-0 z-10 space-y-4 bg-sidebar pb-4", collapsed ? "px-0" : "px-1 sm:px-2")}>
+      <div className="space-y-4 sm:space-y-5">
+        <div className={cn("sticky top-0 z-10 space-y-3 bg-sidebar pb-4", collapsed ? "px-0" : "px-0.5 sm:px-1.5")}>
           <Button
             variant="ghost"
             size="icon"
@@ -68,7 +68,7 @@ export function SidebarNav({
             <Menu className="size-6" />
           </Button>
         </div>
-        <nav className={cn("space-y-1", collapsed && "pt-2")}>
+        <nav className={cn("space-y-1.5", collapsed && "pt-2")}>
           {items.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
@@ -80,7 +80,7 @@ export function SidebarNav({
                 className={cn(
                   collapsed
                     ? "size-12 rounded-[20px] px-0 sm:size-14"
-                    : "h-12 w-full justify-start rounded-2xl px-4 text-sm",
+                    : "h-11 w-full justify-start rounded-2xl px-3.5 text-sm sm:h-12 sm:px-4",
                   active ? "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent" : "text-sidebar-foreground hover:bg-accent",
                 )}
               >
@@ -97,7 +97,7 @@ export function SidebarNav({
       <div className={cn("mt-auto space-y-4", collapsed && "w-full")}>
         {!collapsed ? (
           <>
-            <div className="px-1 py-1">
+            <div className="px-0.5 py-1">
               <div className="flex items-center gap-2.5">
                 <Avatar className="size-11 ring-3 ring-primary/8 sm:size-12">
                   <AvatarFallback className="bg-[radial-gradient(circle_at_30%_30%,#edf3ff_0%,#dbe5ff_58%,#c6d5ff_100%)] text-transparent" aria-hidden="true" />
@@ -111,7 +111,7 @@ export function SidebarNav({
 
             <Button
               variant="outline"
-              className="w-full justify-start rounded-2xl hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              className="h-11 w-full justify-start rounded-2xl hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:h-12"
             >
               <LogOut className="size-4" />
               로그아웃
