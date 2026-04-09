@@ -23,7 +23,7 @@ export function AppShell({ role, children }: AppShellProps) {
   const sidebarDisplayName = role === "student" ? profile.nickname : profile.realName;
   const headerDisplayName = role === "student" ? profile.nickname : profile.realName;
   const studentClassroomMatch = role === "student" ? pathname.match(/^\/class\/([^/]+)$/) : null;
-  const teacherClassroomMatch = role === "teacher" ? pathname.match(/^\/class\/([^/]+)$/) : null;
+  const teacherClassroomMatch = role === "teacher" ? pathname.match(/^\/class\/([^/]+)(?:\/.*)?$/) : null;
   const studentClassroom = studentClassroomMatch ? getStudentClassroom(decodeURIComponent(studentClassroomMatch[1])) : undefined;
   const teacherClassroom = teacherClassroomMatch ? getTeacherClassroom(decodeURIComponent(teacherClassroomMatch[1])) : undefined;
   const studentGroupLabel = studentClassroom?.group?.name.split("·")[0]?.trim();

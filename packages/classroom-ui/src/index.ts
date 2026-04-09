@@ -18,3 +18,4 @@ export * from "./dashboard/chat/group-chat";
 export * from "./dashboard/headers/page-header";
 export * from "./dashboard/layout/sidebar-nav";
 export * from "./dashboard/layout/top-header";
+export * from "./dashboard/teacher/team-arrangement-board";
