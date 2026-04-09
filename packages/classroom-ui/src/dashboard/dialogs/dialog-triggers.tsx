@@ -96,7 +96,7 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>새 수업 만들기</DialogTitle>
-          <DialogDescription>수업명만 입력하면 새 수업을 만들 수 있도록 단순화했습니다.</DialogDescription>
+          <DialogDescription>교강사가 수업명만 입력하면 새 수업을 바로 만들 수 있습니다.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">

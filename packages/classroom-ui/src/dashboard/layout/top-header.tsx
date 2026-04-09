@@ -97,8 +97,8 @@ export function TopHeader({
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          {classroomContext?.actions ? (
-            <div className="hidden items-center gap-3 xl:flex">{classroomContext.actions}</div>
+          {classroomContext ? (
+            classroomContext.actions ? <div className="hidden items-center gap-3 xl:flex">{classroomContext.actions}</div> : null
           ) : role === "student" ? (
             <JoinClassDialog iconOnly />
           ) : (
