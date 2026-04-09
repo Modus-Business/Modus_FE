@@ -53,7 +53,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
   }, [mode]);
 
   return (
-    <div className="relative h-full overflow-hidden">
+    <div className="relative h-full overflow-hidden bg-[#eef3fb]">
       <div
         aria-hidden={mode !== "login"}
         className={cn(
@@ -95,7 +95,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
 
 function LoginVisual({ active }: { active: boolean }) {
   return (
-    <section className="relative order-2 h-full overflow-hidden rounded-[30px] border border-white/70 bg-white shadow-[0_24px_80px_rgba(73,95,148,0.10)] lg:order-1 lg:rounded-[34px]">
+    <section className="relative order-2 h-full overflow-hidden rounded-[30px] border border-white/70 bg-white lg:order-1 lg:rounded-[34px]">
       <div
         className={cn(
           "absolute -left-[42%] top-1/2 h-[920px] w-[920px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_68%_45%,#82a8ff_0%,#5b84ff_48%,#3f63d6_100%)] shadow-[0_20px_80px_rgba(91,132,255,0.28)] will-change-transform transition-transform duration-[1200ms] ease-[cubic-bezier(0.19,1,0.22,1)]",
@@ -125,7 +125,7 @@ function LoginVisual({ active }: { active: boolean }) {
 
 function SignupVisual({ active }: { active: boolean }) {
   return (
-    <section className="relative order-2 h-full overflow-hidden rounded-[30px] border border-white/70 bg-white shadow-[0_24px_80px_rgba(73,95,148,0.10)] lg:rounded-[34px]">
+    <section className="relative order-2 h-full overflow-hidden rounded-[30px] border border-white/70 bg-white lg:rounded-[34px]">
       <div
         className={cn(
           "absolute -right-[42%] top-1/2 h-[920px] w-[920px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_32%_45%,#82a8ff_0%,#5b84ff_48%,#3f63d6_100%)] shadow-[0_20px_80px_rgba(91,132,255,0.28)] will-change-transform transition-transform duration-[1200ms] ease-[cubic-bezier(0.19,1,0.22,1)]",
@@ -161,7 +161,7 @@ function SignupVisual({ active }: { active: boolean }) {
 
 function LoginCard({ active, onSwitchToSignup }: { active: boolean; onSwitchToSignup: () => void }) {
   return (
-    <section className="order-1 flex h-full items-center justify-center rounded-[30px] border border-border/70 bg-white px-4 py-5 shadow-[0_24px_80px_rgba(73,95,148,0.08)] lg:order-2 lg:rounded-[34px] lg:px-8 lg:py-6">
+    <section className="order-1 flex h-full items-center justify-center rounded-[30px] bg-white px-4 py-5 lg:order-2 lg:rounded-[34px] lg:px-8 lg:py-6">
       <Card
         className={cn(
           "w-full max-w-[34rem] rounded-[26px] border-white/80 bg-white/96 shadow-[0_22px_50px_rgba(72,92,145,0.16)] will-change-transform transition-[opacity,transform] duration-[820ms] ease-[cubic-bezier(0.19,1,0.22,1)] lg:rounded-[30px]",
@@ -234,7 +234,7 @@ function SignupCard({
   onSwitchToLogin: () => void;
 }) {
   return (
-    <section className="order-1 flex h-full items-center justify-center rounded-[30px] border border-border/70 bg-white px-4 py-5 shadow-[0_24px_80px_rgba(73,95,148,0.08)] lg:rounded-[34px] lg:px-8 lg:py-6">
+    <section className="order-1 flex h-full items-center justify-center rounded-[30px] bg-white px-4 py-5 lg:rounded-[34px] lg:px-8 lg:py-6">
       <Card
         className={cn(
           "w-full max-w-[35rem] rounded-[26px] border-white/80 bg-white/96 shadow-[0_22px_50px_rgba(72,92,145,0.16)] will-change-transform transition-[opacity,transform] duration-[820ms] ease-[cubic-bezier(0.19,1,0.22,1)] lg:rounded-[30px]",
