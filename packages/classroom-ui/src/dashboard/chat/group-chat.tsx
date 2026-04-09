@@ -4,8 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ArrowUp, MoreHorizontal, PencilLine, Trash2, X } from "lucide-react";
 
 import type { GroupSummary } from "../../lib/mock-data";
-import { cn, getAvatarToneClass } from "../../lib/utils";
-import { Avatar, AvatarFallback } from "../../ui/avatar";
+import { cn } from "../../lib/utils";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../ui/card";
 import { Textarea } from "../../ui/textarea";
@@ -17,7 +16,6 @@ type GroupChatProps = {
 };
 
 const MAX_COMPOSER_HEIGHT = 360;
-const OWN_AVATAR_TONE_CLASS = "bg-[radial-gradient(circle_at_30%_30%,#eef4ff_0%,#dbe6ff_58%,#c6d6ff_100%)]";
 
 export function GroupChat({ group, showHeader = true, className }: GroupChatProps) {
   const [draft, setDraft] = useState("");
@@ -77,7 +75,7 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
               <div
                 key={message.id}
                 className={cn(
-                  "group relative -mx-2 flex items-start gap-1.5 px-2 py-1.5 transition-colors sm:-mx-3 sm:gap-2 sm:px-3 lg:-mx-4 lg:px-4",
+                  "group relative -mx-2 flex items-start px-2 py-1.5 transition-colors sm:-mx-3 sm:px-3 lg:-mx-4 lg:px-4",
                   message.own ? "justify-end" : "justify-start",
                   openMenuId === message.id ? "bg-slate-950/[0.04]" : "hover:bg-slate-950/[0.04]",
                 )}
@@ -134,55 +132,41 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                     ) : null}
                   </div>
                 ) : null}
-                {!message.own ? (
-                  <Avatar className="mt-1 size-9 shrink-0 bg-secondary sm:size-11">
-                    <AvatarFallback
-                      className={cn("text-transparent", getAvatarToneClass(message.author))}
-                      aria-hidden="true"
-                    >
-                      {message.author.slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : null}
                 <div
                   className={cn(
-                    "relative min-w-0 max-w-[calc(100%-3rem)] sm:max-w-[calc(100%-4.25rem)] lg:max-w-[min(48rem,calc(100%-5rem))]",
+                    "flex min-w-0 max-w-[min(48rem,100%)] flex-col gap-1.5",
+                    message.own ? "items-end" : "items-start",
                   )}
                 >
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "pointer-events-none absolute bottom-[18px] z-0 block size-5 bg-white/98 shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
-                      message.own
-                        ? "right-4 translate-x-[58%] rotate-[34deg] rounded-br-[15px] border-r border-b border-[#d6deef]"
-                        : "left-4 -translate-x-[58%] -rotate-[34deg] rounded-bl-[15px] border-l border-b border-[#d6deef]",
-                    )}
-                  />
                   <div
                     className={cn(
-                      "relative z-10 break-words border border-[#d6deef] bg-white/98 px-4 py-3 text-xs leading-6 text-foreground shadow-[0_18px_42px_rgba(148,163,184,0.14),0_2px_8px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 sm:text-sm sm:leading-7 lg:px-6 lg:py-5",
-                      message.own ? "rounded-[26px] rounded-br-[16px]" : "rounded-[26px] rounded-bl-[16px]",
+                      "flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] text-muted-foreground sm:text-xs",
+                      message.own ? "justify-end text-right" : "justify-start text-left",
                     )}
                   >
+                    <span className="font-semibold">{message.author}</span>
+                    <span>{message.time}</span>
+                  </div>
+                  <div className="relative min-w-0 self-stretch">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "pointer-events-none absolute bottom-[18px] z-0 block size-5 bg-white/98 shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
+                        message.own
+                          ? "right-4 translate-x-[58%] rotate-[34deg] rounded-br-[15px] border-r border-b border-[#d6deef]"
+                          : "left-4 -translate-x-[58%] -rotate-[34deg] rounded-bl-[15px] border-l border-b border-[#d6deef]",
+                      )}
+                    />
                     <div
                       className={cn(
-                        "mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs",
-                        message.own ? "justify-end text-right" : "justify-start text-left",
+                        "relative z-10 break-words border border-[#d6deef] bg-white/98 px-4 py-3 text-xs leading-6 text-foreground shadow-[0_18px_42px_rgba(148,163,184,0.14),0_2px_8px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 sm:text-sm sm:leading-7 lg:px-6 lg:py-5",
+                        message.own ? "rounded-[26px] rounded-br-[16px]" : "rounded-[26px] rounded-bl-[16px]",
                       )}
                     >
-                      <span className="font-semibold">{message.author}</span>
-                      <span>{message.time}</span>
+                      <p className="break-words text-left">{message.content}</p>
                     </div>
-                    <p className="break-words text-left">{message.content}</p>
                   </div>
                 </div>
-                {message.own ? (
-                  <Avatar className="mt-1 size-9 shrink-0 bg-secondary sm:size-11">
-                    <AvatarFallback className={cn("text-transparent", OWN_AVATAR_TONE_CLASS)} aria-hidden="true">
-                      {message.author.slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : null}
               </div>
             ))}
             </div>

@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { ChevronRight, Menu } from "lucide-react";
 
 import type { UserRole } from "../../lib/mock-data";
-import { Avatar, AvatarFallback } from "../../ui/avatar";
 import { Button } from "../../ui/button";
 import { BrandLogo } from "../brand/brand-logo";
 import { CreateClassDialog, JoinClassDialog } from "../dialogs/dialog-triggers";
@@ -38,12 +37,14 @@ export function TopHeader({
   const effectiveProfileDescriptor = classroomContext?.profileDescriptor ?? profileDescriptor;
   const compactDescriptor = effectiveProfileDescriptor.split("·")[0]?.trim() ?? effectiveProfileDescriptor;
   const useCompactProfile = role === "student" || hideProfileDescriptor || Boolean(classroomContext);
+  const useNicknameLabel = Boolean(classroomContext?.profileName);
   const showProfileDescriptor = !useCompactProfile && !classroomContext?.hideProfileDescriptor && compactDescriptor.length > 0;
   const shouldShowBrandLogo = classroomContext ? true : showBrandLogo;
-  const profileLinkClassName = classroomContext ? "gap-2.5 rounded-xl px-0.5" : "gap-3 rounded-2xl px-1";
-  const avatarClassName = classroomContext
-    ? "size-9 ring-1 ring-primary/10 transition-all duration-150 group-hover:ring-primary/20 group-hover:shadow-[0_6px_14px_rgba(91,132,255,0.1)] sm:size-10"
-    : "size-10 ring-2 ring-primary/10 transition-all duration-150 group-hover:ring-primary/20 group-hover:shadow-[0_8px_20px_rgba(91,132,255,0.12)] sm:size-11";
+  const profileLinkClassName = useNicknameLabel
+    ? ""
+    : classroomContext
+      ? "gap-2.5 rounded-xl px-0.5"
+      : "gap-3 rounded-2xl px-1";
   const profileNameClassName = useCompactProfile
     ? "truncate text-sm font-semibold text-foreground transition-colors duration-150 group-hover:text-primary"
     : "truncate text-base font-semibold text-foreground transition-colors duration-150 group-hover:text-primary";
@@ -105,23 +106,22 @@ export function TopHeader({
             <CreateClassDialog iconOnly />
           )}
           <div
-            className={`group flex items-center py-1 ${profileLinkClassName}`}
+            className={`group flex items-center ${useNicknameLabel ? "" : "py-1"} ${profileLinkClassName}`}
             aria-label="프로필 표시"
           >
-            <Avatar className={avatarClassName}>
-                <AvatarFallback
-                  className="bg-[radial-gradient(circle_at_30%_30%,#eef4ff_0%,#dbe6ff_58%,#c6d6ff_100%)] text-transparent"
-                  aria-hidden="true"
-                >
-                  {effectiveProfileName.slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-            <div className="hidden min-w-0 md:block">
-              <p className={profileNameClassName}>{effectiveProfileName}</p>
-              {showProfileDescriptor ? (
-                <p className={profileDescriptorClassName}>{compactDescriptor}</p>
-              ) : null}
-            </div>
+            {useNicknameLabel ? (
+              <p className="whitespace-nowrap text-sm font-semibold text-foreground">
+                닉네임: {effectiveProfileName}
+              </p>
+            ) : null}
+            {!useNicknameLabel ? (
+              <div className="hidden min-w-0 md:block">
+                <p className={profileNameClassName}>{effectiveProfileName}</p>
+                {showProfileDescriptor ? (
+                  <p className={profileDescriptorClassName}>{compactDescriptor}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
