@@ -25,7 +25,7 @@ pnpm dev
 pnpm dev:web
 pnpm dev:student
 pnpm dev:teacher
-```
+``` 
 
 기본 포트:
 
