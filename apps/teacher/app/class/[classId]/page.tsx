@@ -13,17 +13,17 @@ export default async function TeacherClassPage({ params }: TeacherClassPageProps
   if (!classroom) notFound();
 
   return (
-    <>
+    <div className="-mx-3 -my-3 flex flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5">
       <PageHeader
         title={classroom.name}
         profileName={teacherProfile.realName}
         profileDescriptor={teacherProfile.descriptor}
         showProfile={false}
         actions={<><ClassCodeDialog classCode={classroom.code} /><NoticesDialog notices={classroom.notices} /><NewNoticeDialog /></>}
+        className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />
 
-      <section>
-        <div>
+      <section className="bg-background/60 p-4 sm:p-5 lg:p-6">
           <Card className="bg-white/95">
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><UsersRound className="size-5 text-primary" />모둠 현황</CardTitle>
@@ -41,8 +41,7 @@ export default async function TeacherClassPage({ params }: TeacherClassPageProps
               ))}
             </CardContent>
           </Card>
-        </div>
       </section>
-    </>
+    </div>
   );
 }
