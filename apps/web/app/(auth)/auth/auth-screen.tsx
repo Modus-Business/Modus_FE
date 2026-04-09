@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowUpRight, ChevronLeft, GraduationCap, LockKeyhole, Mail, School, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, GraduationCap, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
 
 import { Badge, BrandLogo, Button, Card, CardContent, Input, cn } from "@modus/classroom-ui";
 
@@ -17,12 +17,12 @@ const layerClassName = "absolute inset-0 grid h-full gap-3 lg:grid-cols-[1.04fr_
 export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
   const [mode, setMode] = React.useState<AuthMode>(initialMode);
   const [signupRole, setSignupRole] = React.useState<SignupRole | null>(null);
-  const [signupStep, setSignupStep] = React.useState<"school" | "role" | "profile" | "verify">("school");
+  const [signupStep, setSignupStep] = React.useState<"role" | "profile" | "verify">("role");
 
   const openSignup = React.useCallback(() => {
     setMode("signup");
     setSignupRole(null);
-    setSignupStep("school");
+    setSignupStep("role");
   }, []);
 
   const openLogin = React.useCallback(() => {
@@ -78,9 +78,8 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
           step={signupStep}
           onBackToRoleSelect={() => {
             setSignupRole(null);
-            setSignupStep("school");
+            setSignupStep("role");
           }}
-          onProceedToRoleSelect={() => setSignupStep("role")}
           onProceedToVerify={() => setSignupStep("verify")}
           onSelectRole={(role) => {
             setSignupRole(role);
@@ -222,16 +221,14 @@ function SignupCard({
   role,
   step,
   onBackToRoleSelect,
-  onProceedToRoleSelect,
   onProceedToVerify,
   onSelectRole,
   onSwitchToLogin,
 }: {
   active: boolean;
   role: SignupRole | null;
-  step: "school" | "role" | "profile" | "verify";
+  step: "role" | "profile" | "verify";
   onBackToRoleSelect: () => void;
-  onProceedToRoleSelect: () => void;
   onProceedToVerify: () => void;
   onSelectRole: (role: SignupRole) => void;
   onSwitchToLogin: () => void;
@@ -250,35 +247,6 @@ function SignupCard({
               Sign up
             </Badge>
           </div>
-
-          {step === "school" ? (
-            <form
-              className="space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                onProceedToRoleSelect();
-              }}
-            >
-              <div className="rounded-[18px] bg-[#f8faff] px-4 py-3">
-                <p className="text-sm font-semibold text-foreground">학교 검색</p>
-                <p className="mt-1 text-xs text-muted-foreground">가장 먼저 소속 학교를 선택해 주세요.</p>
-              </div>
-
-              <div className="relative">
-                <School className="pointer-events-none absolute left-5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="school-name"
-                  placeholder="학교 이름을 입력하세요"
-                  autoComplete="organization"
-                  className="h-[56px] rounded-[18px] border-transparent bg-[#eef3fb] pl-12 text-base shadow-none placeholder:text-[#7f8ba3]"
-                />
-              </div>
-
-              <Button type="submit" size="lg" className="h-[52px] w-full rounded-[16px] text-[1.02rem] shadow-[0_16px_34px_rgba(91,132,255,0.22)]">
-                계정 유형 선택
-              </Button>
-            </form>
-          ) : null}
 
           {step === "role" ? (
             <div className="grid gap-4 sm:grid-cols-2">
