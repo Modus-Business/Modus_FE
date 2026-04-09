@@ -72,14 +72,13 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
       <CardContent className="flex min-h-0 flex-1 p-0">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(249,251,255,0.96)_0%,rgba(244,247,252,0.96)_100%)]">
           <div className="flex-1 overflow-y-auto">
-            <div className="space-y-4 p-3 sm:p-5 lg:space-y-5 lg:p-7">
+            <div className="space-y-2.5 p-2.5 sm:p-3.5 lg:space-y-3 lg:p-4">
             {group.messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  "group relative -mx-3 flex items-start gap-2 px-3 py-2 transition-colors sm:-mx-5 sm:gap-3 sm:px-5 lg:-mx-7 lg:px-7",
+                  "group relative -mx-2 flex items-start gap-1.5 px-2 py-1.5 transition-colors sm:-mx-3 sm:gap-2 sm:px-3 lg:-mx-4 lg:px-4",
                   message.own ? "justify-end" : "justify-start",
-                  message.id !== group.messages[0]?.id ? "mt-3 sm:mt-4 lg:mt-5" : "",
                   openMenuId === message.id ? "bg-slate-950/[0.04]" : "hover:bg-slate-950/[0.04]",
                 )}
               >
@@ -147,7 +146,7 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                 ) : null}
                 <div
                   className={cn(
-                    "relative min-w-0 max-w-[calc(100%-3.25rem)] sm:max-w-[calc(100%-4.5rem)] lg:max-w-[42rem]",
+                    "relative min-w-0 max-w-[calc(100%-3rem)] sm:max-w-[calc(100%-4.25rem)] lg:max-w-[min(48rem,calc(100%-5rem))]",
                   )}
                 >
                   <span
