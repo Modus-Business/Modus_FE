@@ -364,7 +364,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
           <CardTitle>전체 학생</CardTitle>
           <CardDescription>학생 전체를 확인하면서 현재 배치된 모둠을 보고 바로 변경할 수 있습니다.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {classroom.roster.map((student) => {
             const assignedTeam = teams.find((team) => team.memberIds.includes(student.id));
             const assignedTeamLabel = assignedTeam ? assignedTeam.name.split("·")[0]?.trim() ?? assignedTeam.name : "미배치";
