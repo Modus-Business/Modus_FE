@@ -27,6 +27,7 @@ const normalizeTeamName = (value: string) => value.trim().replace(/\s+/g, " ").t
 export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
   const [teams, setTeams] = useState<ArrangementTeam[]>(() => classroom.teams.map((team) => ({ ...team, memberIds: [...team.memberIds] })));
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null);
+  const [draggingStudentId, setDraggingStudentId] = useState<string | null>(null);
   const [pendingDeleteTeamId, setPendingDeleteTeamId] = useState<string | null>(null);
   const [teamNameDialog, setTeamNameDialog] = useState<TeamNameDialogState>(null);
   const [teamNameDraft, setTeamNameDraft] = useState("");
@@ -60,7 +61,24 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
       );
     });
     setActiveDropZone(null);
+    setDraggingStudentId(null);
     setOpenStudentPickerId((current) => (current === studentId ? null : current));
+  };
+
+  const handleStudentDragStart = (
+    event: React.DragEvent<HTMLDivElement>,
+    studentId: string,
+  ) => {
+    event.dataTransfer.setData("text/student-id", studentId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setDragImage(event.currentTarget, 24, 24);
+    setDraggingStudentId(studentId);
+    setOpenStudentPickerId((current) => (current === studentId ? null : current));
+  };
+
+  const handleStudentDragEnd = () => {
+    setDraggingStudentId(null);
+    setActiveDropZone(null);
   };
 
   const createGroup = (teamName: string) => {
@@ -256,11 +274,12 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                     key={student.id}
                     draggable
                     data-testid={`unassigned-member-${student.id}`}
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData("text/student-id", student.id);
-                      event.dataTransfer.effectAllowed = "move";
-                    }}
-                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border/70 bg-white/95 px-3 py-3 text-left shadow-none"
+                    onDragStart={(event) => handleStudentDragStart(event, student.id)}
+                    onDragEnd={handleStudentDragEnd}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-2xl border border-border/70 bg-white/95 px-3 py-3 text-left shadow-none transition-[opacity,transform,box-shadow,border-color] duration-150",
+                      draggingStudentId === student.id && "border-primary/40 opacity-70 shadow-[0_12px_28px_rgba(91,132,255,0.16)]"
+                    )}
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <GripVertical className="size-4 text-muted-foreground" />
@@ -287,8 +306,8 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               <div
                 key={team.id}
                 className={cn(
-                  "rounded-[28px] border border-border/80 bg-background/70 p-4 transition-colors",
-                  activeDropZone === team.id && "border-primary/50 bg-primary/5",
+                  "rounded-[28px] border border-border/80 bg-background/70 p-4 transition-[background-color,border-color,box-shadow] duration-150",
+                  activeDropZone === team.id && "border-primary/45 bg-[#f7faff] shadow-[inset_0_0_0_1px_rgba(91,132,255,0.14),0_10px_24px_rgba(91,132,255,0.08)]",
                 )}
                 data-testid={`team-dropzone-${team.id}`}
                 onDragOver={(event) => {
@@ -342,11 +361,12 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                           key={student.id}
                           draggable
                           data-testid={`team-member-${team.id}-${student.id}`}
-                          onDragStart={(event) => {
-                            event.dataTransfer.setData("text/student-id", student.id);
-                            event.dataTransfer.effectAllowed = "move";
-                          }}
-                          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-left shadow-none"
+                          onDragStart={(event) => handleStudentDragStart(event, student.id)}
+                          onDragEnd={handleStudentDragEnd}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-left shadow-none transition-[opacity,transform,box-shadow,border-color] duration-150",
+                            draggingStudentId === student.id && "border-primary/40 opacity-70 shadow-[0_12px_28px_rgba(91,132,255,0.16)]"
+                          )}
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <GripVertical className="size-4 text-muted-foreground" />
