@@ -4,20 +4,13 @@ import { useState } from "react";
 import { ChevronDown, Hash, Users } from "lucide-react";
 
 import type { MemberProfile } from "@modus/classroom-ui";
-import { Avatar, AvatarFallback, Card, CardContent, CardHeader, CardTitle, cn } from "@modus/classroom-ui";
+import { Card, CardContent, CardHeader, CardTitle, cn } from "@modus/classroom-ui";
 
 type GroupMembersCardProps = {
   members: MemberProfile[];
   code: string;
   className?: string;
 };
-
-const memberAvatarStyles = [
-  "bg-[radial-gradient(circle_at_30%_30%,#eef4ff_0%,#dbe6ff_58%,#c6d6ff_100%)]",
-  "bg-[radial-gradient(circle_at_30%_30%,#effbf6_0%,#d8f5e8_58%,#bfe9d8_100%)]",
-  "bg-[radial-gradient(circle_at_30%_30%,#fff4ee_0%,#ffe2d2_58%,#ffd0bb_100%)]",
-  "bg-[radial-gradient(circle_at_30%_30%,#f5f1ff_0%,#e4dbff_58%,#d3c7ff_100%)]",
-];
 
 export function GroupMembersCard({ members, code, className }: GroupMembersCardProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,18 +42,10 @@ export function GroupMembersCard({ members, code, className }: GroupMembersCardP
 
       {isOpen ? (
         <CardContent className="p-0">
-          {members.map((member, index) => (
+          {members.map((member) => (
             <div key={member.id} className="border-t border-border/70 bg-background/70 p-4 first:border-t-0">
-              <div className="flex items-center gap-3">
-                <Avatar className="size-9 ring-2 ring-white/80">
-                  <AvatarFallback
-                    className={memberAvatarStyles[index % memberAvatarStyles.length]}
-                    aria-hidden="true"
-                  />
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-medium text-foreground sm:text-sm">{member.nickname}</p>
-                </div>
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-medium text-foreground sm:text-sm">{member.nickname}</p>
               </div>
             </div>
           ))}
