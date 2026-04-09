@@ -18,3 +18,4 @@ coverage
 .codex/skills/.system/**
 !.codex/prompts/
 !.codex/prompts/**
+.vercel
