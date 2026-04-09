@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookMarked, Layers3, LogOut, Menu, Settings } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "../../ui/avatar";
 import { Button } from "../../ui/button";
 import { cn } from "../../lib/utils";
 
@@ -12,8 +11,6 @@ type DashboardRole = "student" | "teacher";
 
 type SidebarNavProps = {
   role: DashboardRole;
-  nickname: string;
-  descriptor: string;
   collapsed?: boolean;
   onToggle?: () => void;
   onNavigate?: () => void;
@@ -33,8 +30,6 @@ const navConfig = {
 
 export function SidebarNav({
   role,
-  nickname,
-  descriptor,
   collapsed = false,
   onToggle,
   onNavigate,
@@ -42,8 +37,6 @@ export function SidebarNav({
 }: SidebarNavProps) {
   const pathname = usePathname();
   const items = navConfig[role];
-  const compactDescriptor = descriptor.split("·")[0]?.trim() ?? descriptor;
-  const showDescriptor = role !== "student";
 
   return (
     <aside
@@ -96,27 +89,13 @@ export function SidebarNav({
 
       <div className={cn("mt-auto space-y-4", collapsed && "w-full")}>
         {!collapsed ? (
-          <>
-            <div className="px-0.5 py-1">
-              <div className="flex items-center gap-2.5">
-                <Avatar className="size-11 ring-3 ring-primary/8 sm:size-12">
-                  <AvatarFallback className="bg-[radial-gradient(circle_at_30%_30%,#edf3ff_0%,#dbe5ff_58%,#c6d5ff_100%)] text-transparent" aria-hidden="true" />
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate text-base font-semibold tracking-tight text-foreground">{nickname}</p>
-                  {showDescriptor ? <p className="mt-1 truncate text-sm leading-none text-muted-foreground">{compactDescriptor}</p> : null}
-                </div>
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              className="h-11 w-full justify-start rounded-2xl hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:h-12"
-            >
-              <LogOut className="size-4" />
-              로그아웃
-            </Button>
-          </>
+          <Button
+            variant="outline"
+            className="h-11 w-full justify-start rounded-2xl hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:h-12"
+          >
+            <LogOut className="size-4" />
+            로그아웃
+          </Button>
         ) : (
           <Button
             variant="ghost"

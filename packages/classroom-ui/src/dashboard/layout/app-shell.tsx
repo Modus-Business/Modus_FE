@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "../../lib/utils";
 import { getStudentClassroom, getTeacherClassroom, studentProfile, teacherProfile, type UserRole } from "../../lib/mock-data";
-import { AssignmentSummaryDialog, NoticesDialog, SubmitAssignmentDialog } from "../dialogs/dialog-triggers";
+import { NoticesDialog, SubmitAssignmentDialog } from "../dialogs/dialog-triggers";
 import { SidebarNav } from "./sidebar-nav";
 import { TopHeader } from "./top-header";
 
@@ -20,23 +20,17 @@ export function AppShell({ role, children }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const profile = role === "student" ? studentProfile : teacherProfile;
-  const sidebarDisplayName = role === "student" ? profile.nickname : profile.realName;
-  const headerDisplayName = role === "student" ? profile.nickname : profile.realName;
+  const headerDisplayName = profile.realName;
   const studentClassroomMatch = role === "student" ? pathname.match(/^\/class\/([^/]+)$/) : null;
   const teacherClassroomMatch = role === "teacher" ? pathname.match(/^\/class\/([^/]+)(?:\/.*)?$/) : null;
   const studentClassroom = studentClassroomMatch ? getStudentClassroom(decodeURIComponent(studentClassroomMatch[1])) : undefined;
   const teacherClassroom = teacherClassroomMatch ? getTeacherClassroom(decodeURIComponent(teacherClassroomMatch[1])) : undefined;
   const studentGroupLabel = studentClassroom?.group?.name.split("·")[0]?.trim();
+  const studentGroupNickname = studentClassroom?.group
+    ? studentClassroom.group.members.find((member) => member.realName === studentProfile.realName)?.nickname ?? studentProfile.nickname
+    : undefined;
   const classroomHeaderActions = studentClassroom ? (
     <>
-      <AssignmentSummaryDialog
-        assignments={studentClassroom.assignments}
-        triggerProps={{
-          size: "lg",
-          className:
-            "h-11 rounded-full border-primary/20 bg-white px-5 text-sm font-semibold text-foreground shadow-none hover:border-primary/35 hover:bg-primary/5",
-        }}
-      />
       <NoticesDialog
         notices={studentClassroom.notices}
         triggerProps={{
@@ -99,8 +93,6 @@ export function AppShell({ role, children }: AppShellProps) {
       <div className="hidden border-r border-border/70 bg-white/90 transition-[width] duration-300 ease-in-out lg:block">
         <SidebarNav
           role={role}
-          nickname={sidebarDisplayName}
-          descriptor={profile.descriptor}
           collapsed={!sidebarExpanded}
           onToggle={() => setSidebarExpanded((prev) => !prev)}
         />
@@ -122,8 +114,6 @@ export function AppShell({ role, children }: AppShellProps) {
       >
         <SidebarNav
           role={role}
-          nickname={sidebarDisplayName}
-          descriptor={profile.descriptor}
           onToggle={() => setMobileNavOpen(false)}
           onNavigate={() => setMobileNavOpen(false)}
           className="bg-white/95"
@@ -144,7 +134,7 @@ export function AppShell({ role, children }: AppShellProps) {
                   title: studentClassroom.name,
                   subtitle: studentGroupLabel,
                   actions: classroomHeaderActions,
-                  profileName: studentProfile.nickname,
+                  profileName: studentGroupNickname,
                   hideProfileDescriptor: true,
                 }
               : teacherClassroom
