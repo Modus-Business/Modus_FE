@@ -22,9 +22,12 @@ type TeamNameDialogState =
   | { mode: "rename"; teamId: string }
   | null;
 
+const normalizeTeamName = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
 export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
   const [teams, setTeams] = useState<ArrangementTeam[]>(() => classroom.teams.map((team) => ({ ...team, memberIds: [...team.memberIds] })));
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null);
+  const [draggingStudentId, setDraggingStudentId] = useState<string | null>(null);
   const [pendingDeleteTeamId, setPendingDeleteTeamId] = useState<string | null>(null);
   const [teamNameDialog, setTeamNameDialog] = useState<TeamNameDialogState>(null);
   const [teamNameDraft, setTeamNameDraft] = useState("");
@@ -58,7 +61,24 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
       );
     });
     setActiveDropZone(null);
+    setDraggingStudentId(null);
     setOpenStudentPickerId((current) => (current === studentId ? null : current));
+  };
+
+  const handleStudentDragStart = (
+    event: React.DragEvent<HTMLDivElement>,
+    studentId: string,
+  ) => {
+    event.dataTransfer.setData("text/student-id", studentId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setDragImage(event.currentTarget, 24, 24);
+    setDraggingStudentId(studentId);
+    setOpenStudentPickerId((current) => (current === studentId ? null : current));
+  };
+
+  const handleStudentDragEnd = () => {
+    setDraggingStudentId(null);
+    setActiveDropZone(null);
   };
 
   const createGroup = (teamName: string) => {
@@ -94,6 +114,22 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
   const pendingRenameTeam = teamNameDialog?.mode === "rename"
     ? teams.find((team) => team.id === teamNameDialog.teamId) ?? null
     : null;
+  const nextTeamName = teamNameDraft.trim();
+  const hasDuplicateTeamName = useMemo(() => {
+    if (!teamNameDialog || nextTeamName.length === 0) {
+      return false;
+    }
+
+    const normalizedDraft = normalizeTeamName(nextTeamName);
+
+    return teams.some((team) => {
+      if (teamNameDialog.mode === "rename" && team.id === teamNameDialog.teamId) {
+        return false;
+      }
+
+      return normalizeTeamName(team.name) === normalizedDraft;
+    });
+  }, [nextTeamName, teamNameDialog, teams]);
 
   const openCreateGroupDialog = () => {
     setTeamNameDraft("");
@@ -107,7 +143,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
 
   const submitTeamName = () => {
     const nextName = teamNameDraft.trim();
-    if (!nextName || !teamNameDialog) return;
+    if (!nextName || !teamNameDialog || hasDuplicateTeamName) return;
 
     if (teamNameDialog.mode === "create") {
       createGroup(nextName);
@@ -146,14 +182,18 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               value={teamNameDraft}
               onChange={(event) => setTeamNameDraft(event.target.value)}
               placeholder={pendingRenameTeam?.name ?? "예: 모둠 1"}
+              aria-invalid={hasDuplicateTeamName}
               autoFocus
             />
+            {hasDuplicateTeamName ? (
+              <p className="text-sm text-destructive">같은 이름의 모둠은 생성할 수 없습니다.</p>
+            ) : null}
           </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">취소</Button>
             </DialogClose>
-            <Button onClick={submitTeamName} disabled={teamNameDraft.trim().length === 0}>
+            <Button onClick={submitTeamName} disabled={nextTeamName.length === 0 || hasDuplicateTeamName}>
               {teamNameDialog?.mode === "rename" ? "이름 변경" : "생성하기"}
             </Button>
           </DialogFooter>
@@ -230,25 +270,30 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
             <div className="mt-4 space-y-2">
               {unassignedStudents.length > 0 ? (
                 unassignedStudents.map((student) => (
-                  <button
+                  <div
                     key={student.id}
-                    type="button"
                     draggable
                     data-testid={`unassigned-member-${student.id}`}
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData("text/student-id", student.id);
-                      event.dataTransfer.effectAllowed = "move";
-                    }}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-white/95 px-3 py-3 text-left shadow-none"
+                    onDragStart={(event) => handleStudentDragStart(event, student.id)}
+                    onDragEnd={handleStudentDragEnd}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-2xl border border-border/70 bg-white/95 px-3 py-3 text-left shadow-none transition-[opacity,transform,box-shadow,border-color] duration-150",
+                      draggingStudentId === student.id && "border-primary/40 opacity-70 shadow-[0_12px_28px_rgba(91,132,255,0.16)]"
+                    )}
                   >
-                    <GripVertical className="size-4 text-muted-foreground" />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <GripVertical className="size-4 text-muted-foreground" />
+                      <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
-                        {student.studentCode ? <span className="text-[11px] font-medium text-muted-foreground">{student.studentCode}</span> : null}
                       </div>
                     </div>
-                  </button>
+                    <span className="group relative inline-flex shrink-0 cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary">
+                      email
+                      <span className="pointer-events-none absolute top-[calc(100%+0.55rem)] right-0 z-30 w-max max-w-[220px] translate-y-1 rounded-2xl border border-sky-100 bg-white/98 px-3 py-2 text-xs font-medium normal-case text-foreground opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.12)] transition duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+                        {student.email ?? "이메일 정보 없음"}
+                      </span>
+                    </span>
+                  </div>
                 ))
               ) : (
                 <div className="rounded-2xl bg-white/80 px-4 py-5 text-sm text-muted-foreground">모든 학생이 모둠에 배치되었습니다.</div>
@@ -261,8 +306,8 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               <div
                 key={team.id}
                 className={cn(
-                  "rounded-[28px] border border-border/80 bg-background/70 p-4 transition-colors",
-                  activeDropZone === team.id && "border-primary/50 bg-primary/5",
+                  "rounded-[28px] border border-border/80 bg-background/70 p-4 transition-[background-color,border-color,box-shadow] duration-150",
+                  activeDropZone === team.id && "border-primary/45 bg-[#f7faff] shadow-[inset_0_0_0_1px_rgba(91,132,255,0.14),0_10px_24px_rgba(91,132,255,0.08)]",
                 )}
                 data-testid={`team-dropzone-${team.id}`}
                 onDragOver={(event) => {
@@ -312,25 +357,30 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                       const student = rosterById.get(memberId);
                       if (!student) return null;
                       return (
-                        <button
+                        <div
                           key={student.id}
-                          type="button"
                           draggable
                           data-testid={`team-member-${team.id}-${student.id}`}
-                          onDragStart={(event) => {
-                            event.dataTransfer.setData("text/student-id", student.id);
-                            event.dataTransfer.effectAllowed = "move";
-                          }}
-                          className="flex w-full items-center gap-3 rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-left shadow-none"
+                          onDragStart={(event) => handleStudentDragStart(event, student.id)}
+                          onDragEnd={handleStudentDragEnd}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-left shadow-none transition-[opacity,transform,box-shadow,border-color] duration-150",
+                            draggingStudentId === student.id && "border-primary/40 opacity-70 shadow-[0_12px_28px_rgba(91,132,255,0.16)]"
+                          )}
                         >
-                          <GripVertical className="size-4 text-muted-foreground" />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <GripVertical className="size-4 text-muted-foreground" />
+                            <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
-                              {student.studentCode ? <span className="text-[11px] font-medium text-muted-foreground">{student.studentCode}</span> : null}
                             </div>
                           </div>
-                        </button>
+                          <span className="group relative inline-flex shrink-0 cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary">
+                            email
+                            <span className="pointer-events-none absolute top-[calc(100%+0.55rem)] right-0 z-30 w-max max-w-[220px] translate-y-1 rounded-2xl border border-sky-100 bg-white/98 px-3 py-2 text-xs font-medium normal-case text-foreground opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.12)] transition duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+                              {student.email ?? "이메일 정보 없음"}
+                            </span>
+                          </span>
+                        </div>
                       );
                     })
                   ) : (
@@ -380,9 +430,20 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-foreground">{student.realName}</p>
-                      {student.studentCode ? <span className="text-[11px] font-medium text-muted-foreground">{student.studentCode}</span> : null}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          className="group inline-flex cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary outline-none transition-colors hover:border-primary/30 hover:bg-primary/10 focus-visible:border-primary/40 focus-visible:bg-primary/10"
+                          aria-label={`${student.realName} 이메일 보기`}
+                        >
+                          email
+                          <span className="pointer-events-none absolute top-[calc(100%+0.55rem)] left-1/2 z-30 w-max max-w-[220px] -translate-x-1/2 translate-y-1 rounded-2xl border border-sky-100 bg-white/98 px-3 py-2 text-xs font-medium normal-case text-foreground opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.12)] transition duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+                            {student.email ?? "이메일 정보 없음"}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

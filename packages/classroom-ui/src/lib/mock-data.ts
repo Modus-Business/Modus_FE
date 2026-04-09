@@ -30,6 +30,7 @@ export type MemberProfile = {
   nickname: string;
   realName: string;
   studentCode?: string;
+  email?: string;
   status: "online" | "focus" | "away";
   roleLabel: string;
 };
@@ -267,6 +268,7 @@ const teacherProductStudioRoster: MemberProfile[] = ([
   nickname: realName,
   realName,
   studentCode,
+  email: `student${studentCode}@modus.ac.kr`,
   status,
   roleLabel,
 }));
@@ -293,6 +295,7 @@ const teacherServiceBlueprintRoster: MemberProfile[] = ([
   nickname: realName,
   realName,
   studentCode,
+  email: `student${studentCode}@modus.ac.kr`,
   status,
   roleLabel,
 }));
