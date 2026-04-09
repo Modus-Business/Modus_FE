@@ -373,7 +373,10 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               <div
                 key={student.id}
                 data-testid={`student-card-${student.id}`}
-                className="rounded-[24px] border border-border/70 bg-background/70 px-4 py-4 text-left shadow-none"
+                className={cn(
+                  "relative rounded-[24px] border border-border/70 bg-background/70 px-4 py-4 text-left shadow-none overflow-visible",
+                  pickerOpen && "z-20",
+                )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -400,7 +403,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
                   </Button>
                 </div>
                 {pickerOpen ? (
-                  <div className="mt-3 space-y-2 rounded-2xl border border-border/70 bg-white/90 p-2">
+                  <div className="absolute right-4 left-4 top-[calc(100%-1.25rem)] space-y-2 rounded-2xl border border-border/70 bg-white/95 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
                     {teams.length > 0 ? (
                       teams.map((team) => {
                         const teamLabel = team.name.split("·")[0]?.trim() ?? team.name;
