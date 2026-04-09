@@ -223,11 +223,11 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               }
             }}
           >
-            <div className="sticky top-0 z-10 -mx-4 -mt-4 border-b border-border/60 px-4 py-4">
+            <div className="sticky top-0 z-10 -mx-4 -mt-4 border-b border-border/60 bg-white/85 px-4 pt-4 pb-4 backdrop-blur-xl backdrop-saturate-150">
               <p className="text-sm font-semibold text-foreground">미배치 학생</p>
               <p className="mt-1 text-xs leading-6 text-muted-foreground">모둠에서 제외할 학생은 여기에 다시 드롭하세요.</p>
             </div>
-            <div className="mt-6 space-y-2">
+            <div className="mt-4 space-y-2">
               {unassignedStudents.length > 0 ? (
                 unassignedStudents.map((student) => (
                   <button
