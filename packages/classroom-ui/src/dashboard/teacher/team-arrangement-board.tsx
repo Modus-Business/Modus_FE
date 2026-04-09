@@ -22,6 +22,8 @@ type TeamNameDialogState =
   | { mode: "rename"; teamId: string }
   | null;
 
+const normalizeTeamName = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+
 export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
   const [teams, setTeams] = useState<ArrangementTeam[]>(() => classroom.teams.map((team) => ({ ...team, memberIds: [...team.memberIds] })));
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null);
@@ -94,6 +96,22 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
   const pendingRenameTeam = teamNameDialog?.mode === "rename"
     ? teams.find((team) => team.id === teamNameDialog.teamId) ?? null
     : null;
+  const nextTeamName = teamNameDraft.trim();
+  const hasDuplicateTeamName = useMemo(() => {
+    if (!teamNameDialog || nextTeamName.length === 0) {
+      return false;
+    }
+
+    const normalizedDraft = normalizeTeamName(nextTeamName);
+
+    return teams.some((team) => {
+      if (teamNameDialog.mode === "rename" && team.id === teamNameDialog.teamId) {
+        return false;
+      }
+
+      return normalizeTeamName(team.name) === normalizedDraft;
+    });
+  }, [nextTeamName, teamNameDialog, teams]);
 
   const openCreateGroupDialog = () => {
     setTeamNameDraft("");
@@ -107,7 +125,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
 
   const submitTeamName = () => {
     const nextName = teamNameDraft.trim();
-    if (!nextName || !teamNameDialog) return;
+    if (!nextName || !teamNameDialog || hasDuplicateTeamName) return;
 
     if (teamNameDialog.mode === "create") {
       createGroup(nextName);
@@ -146,14 +164,18 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
               value={teamNameDraft}
               onChange={(event) => setTeamNameDraft(event.target.value)}
               placeholder={pendingRenameTeam?.name ?? "예: 모둠 1"}
+              aria-invalid={hasDuplicateTeamName}
               autoFocus
             />
+            {hasDuplicateTeamName ? (
+              <p className="text-sm text-destructive">같은 이름의 모둠은 생성할 수 없습니다.</p>
+            ) : null}
           </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">취소</Button>
             </DialogClose>
-            <Button onClick={submitTeamName} disabled={teamNameDraft.trim().length === 0}>
+            <Button onClick={submitTeamName} disabled={nextTeamName.length === 0 || hasDuplicateTeamName}>
               {teamNameDialog?.mode === "rename" ? "이름 변경" : "생성하기"}
             </Button>
           </DialogFooter>
