@@ -3,7 +3,23 @@
 import * as React from "react";
 import { ArrowUpRight, ChevronLeft, GraduationCap, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
 
-import { Badge, BrandLogo, Button, Card, CardContent, Input, cn } from "@modus/classroom-ui";
+import {
+  Badge,
+  BrandLogo,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Input,
+  cn,
+} from "@modus/classroom-ui";
 
 type AuthMode = "login" | "signup";
 type SignupRole = "student" | "teacher";
@@ -233,6 +249,14 @@ function SignupCard({
   onSelectRole: (role: SignupRole) => void;
   onSwitchToLogin: () => void;
 }) {
+  const [resetDialogOpen, setResetDialogOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (step !== "verify") {
+      setResetDialogOpen(false);
+    }
+  }, [step]);
+
   return (
     <section className="order-1 flex h-full items-center justify-center rounded-[30px] bg-white px-4 py-5 lg:rounded-[34px] lg:px-8 lg:py-6">
       <Card
@@ -367,9 +391,35 @@ function SignupCard({
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <Button type="button" variant="outline" className="h-[52px] rounded-[16px]" onClick={onBackToRoleSelect}>
-                  처음부터 다시
-                </Button>
+                <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button type="button" variant="outline" className="h-[52px] rounded-[16px]">
+                      처음부터 다시
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>회원가입을 처음부터 다시 시작할까요?</DialogTitle>
+                      <DialogDescription>
+                        지금까지 입력한 역할과 회원가입 정보가 모두 초기화됩니다. 계속하려면 다시 입력해야 합니다.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">계속 작성</Button>
+                      </DialogClose>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setResetDialogOpen(false);
+                          onBackToRoleSelect();
+                        }}
+                      >
+                        처음부터 다시
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <Button type="button" size="lg" className="h-[52px] rounded-[16px] text-[1.02rem] shadow-[0_16px_34px_rgba(91,132,255,0.22)]">
                   회원가입
                 </Button>
