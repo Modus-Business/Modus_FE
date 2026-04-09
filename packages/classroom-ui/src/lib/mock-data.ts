@@ -29,6 +29,7 @@ export type MemberProfile = {
   id: string;
   nickname: string;
   realName: string;
+  studentCode?: string;
   status: "online" | "focus" | "away";
   roleLabel: string;
 };
@@ -72,11 +73,12 @@ export type TeacherClassroom = {
   teamCount: number;
   studentCount: number;
   notices: NoticeItem[];
+  roster: MemberProfile[];
   teams: Array<{
     id: string;
     name: string;
     theme: string;
-    members: number;
+    memberIds: string[];
     submissionStatus: string;
   }>;
 };
@@ -238,6 +240,63 @@ export const studentClassrooms: StudentClassroom[] = [
   }
 ];
 
+const teacherProductStudioRoster: MemberProfile[] = ([
+  ["tp1", "강민서", "2311", "online", "리서치"],
+  ["tp2", "김도윤", "2315", "focus", "와이어프레임"],
+  ["tp3", "박서윤", "2318", "online", "UI 설계"],
+  ["tp4", "이하준", "2321", "away", "프론트엔드"],
+  ["tp5", "최지우", "2324", "online", "사용자 인터뷰"],
+  ["tp6", "윤서진", "2327", "focus", "디자인 시스템"],
+  ["tp7", "정하린", "2331", "online", "콘텐츠 구조"],
+  ["tp8", "한지호", "2334", "away", "프로토타이핑"],
+  ["tp9", "오유나", "2337", "online", "QA 체크"],
+  ["tp10", "송태윤", "2341", "focus", "데이터 정리"],
+  ["tp11", "문가은", "2344", "online", "발표 자료"],
+  ["tp12", "임준서", "2347", "away", "사용성 테스트"],
+  ["tp13", "유채린", "2351", "online", "카피라이팅"],
+  ["tp14", "조현우", "2354", "focus", "API 연동"],
+  ["tp15", "배시은", "2357", "online", "시각 디자인"],
+  ["tp16", "신예준", "2361", "away", "정보 구조"],
+  ["tp17", "권서아", "2364", "online", "인터랙션"],
+  ["tp18", "남도현", "2367", "focus", "프론트엔드"],
+  ["tp19", "류하린", "2371", "online", "프로젝트 관리"],
+  ["tp20", "장민재", "2374", "away", "리포트 정리"],
+  ["tp21", "백서윤", "2377", "online", "문서화"],
+] as Array<[string, string, string, MemberProfile["status"], string]>).map(([id, realName, studentCode, status, roleLabel]) => ({
+  id,
+  nickname: realName,
+  realName,
+  studentCode,
+  status,
+  roleLabel,
+}));
+
+const teacherServiceBlueprintRoster: MemberProfile[] = ([
+  ["sbp1", "김연우", "2411", "online", "서비스 맵"],
+  ["sbp2", "박유진", "2414", "focus", "리서치"],
+  ["sbp3", "이도현", "2417", "online", "문제 정의"],
+  ["sbp4", "최하은", "2421", "away", "퍼실리테이션"],
+  ["sbp5", "정민재", "2424", "online", "인터뷰 설계"],
+  ["sbp6", "송지안", "2427", "focus", "여정 지도"],
+  ["sbp7", "문서아", "2431", "online", "자료 정리"],
+  ["sbp8", "윤지후", "2434", "away", "발표"],
+  ["sbp9", "강나은", "2437", "online", "시장 조사"],
+  ["sbp10", "임서준", "2441", "focus", "핵심 인사이트"],
+  ["sbp11", "한채원", "2444", "online", "스토리보드"],
+  ["sbp12", "오민규", "2447", "away", "QA"],
+  ["sbp13", "장예은", "2451", "online", "프로세스 설계"],
+  ["sbp14", "신도윤", "2454", "focus", "정리 노트"],
+  ["sbp15", "유하람", "2457", "online", "시각화"],
+  ["sbp16", "배도윤", "2461", "away", "피드백 반영"],
+] as Array<[string, string, string, MemberProfile["status"], string]>).map(([id, realName, studentCode, status, roleLabel]) => ({
+  id,
+  nickname: realName,
+  realName,
+  studentCode,
+  status,
+  roleLabel,
+}));
+
 export const teacherClassrooms: TeacherClassroom[] = [
   {
     id: "product-studio",
@@ -246,8 +305,8 @@ export const teacherClassrooms: TeacherClassroom[] = [
     schedule: "화 · 목 19:00 - 21:00",
     description: "서비스형 결과물을 만드는 메인 프로젝트 수업",
     cohort: "2026 Spring",
-    teamCount: 5,
-    studentCount: 21,
+    teamCount: 0,
+    studentCount: teacherProductStudioRoster.length,
     notices: [
       {
         id: "tn1",
@@ -269,29 +328,8 @@ export const teacherClassrooms: TeacherClassroom[] = [
         summary: "모둠 채널에서는 작업 링크를 고정 메시지로 관리합니다."
       }
     ],
-    teams: [
-      {
-        id: "tg1",
-        name: "모둠 1 · 탐색",
-        theme: "리서치 구조화",
-        members: 4,
-        submissionStatus: "제출 완료"
-      },
-      {
-        id: "tg2",
-        name: "모둠 2 · 인터랙션",
-        theme: "대시보드 설계",
-        members: 4,
-        submissionStatus: "제출 미완료"
-      },
-      {
-        id: "tg3",
-        name: "모둠 3 · 스프린트",
-        theme: "클래스룸 퍼블리싱",
-        members: 4,
-        submissionStatus: "제출 미완료"
-      }
-    ]
+    roster: teacherProductStudioRoster,
+    teams: []
   },
   {
     id: "service-blueprint",
@@ -300,8 +338,8 @@ export const teacherClassrooms: TeacherClassroom[] = [
     schedule: "월 20:00 - 22:00",
     description: "문제 정의부터 정보 설계까지 이어지는 전략형 수업",
     cohort: "2026 Spring",
-    teamCount: 4,
-    studentCount: 16,
+    teamCount: 0,
+    studentCount: teacherServiceBlueprintRoster.length,
     notices: [
       {
         id: "sb1",
@@ -310,22 +348,8 @@ export const teacherClassrooms: TeacherClassroom[] = [
         summary: "다음 수업 전 인터뷰 질문지 링크를 업로드해 주세요."
       }
     ],
-    teams: [
-      {
-        id: "sbg1",
-        name: "모둠 A · 인사이트",
-        theme: "사용자 인터뷰",
-        members: 4,
-        submissionStatus: "제출 완료"
-      },
-      {
-        id: "sbg2",
-        name: "모둠 B · 구조",
-        theme: "서비스 맵",
-        members: 4,
-        submissionStatus: "제출 미완료"
-      }
-    ]
+    roster: teacherServiceBlueprintRoster,
+    teams: []
   }
 ];
 
