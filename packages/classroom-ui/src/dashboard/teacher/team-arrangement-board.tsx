@@ -243,10 +243,10 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
             <span>미배치 {unassignedStudents.length}명</span>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 2xl:grid-cols-[280px_minmax(0,1fr)]">
+        <CardContent className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
           <div
             className={cn(
-              "rounded-[28px] border border-dashed border-border/80 bg-background/80 p-4 transition-colors 2xl:sticky 2xl:top-24 2xl:max-h-[calc(100svh-9rem)] 2xl:self-start 2xl:overflow-y-auto",
+              "rounded-[28px] border border-dashed border-border/80 bg-background/80 p-4 transition-colors xl:sticky xl:top-24 xl:max-h-[calc(100svh-9rem)] xl:self-start xl:overflow-y-auto",
               activeDropZone === "unassigned" && "border-primary/50 bg-primary/5",
             )}
             data-testid="unassigned-dropzone"
@@ -414,7 +414,7 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
           <CardTitle>전체 학생</CardTitle>
           <CardDescription>학생 전체를 확인하면서 현재 배치된 모둠을 보고 바로 변경할 수 있습니다.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {classroom.roster.map((student) => {
             const assignedTeam = teams.find((team) => team.memberIds.includes(student.id));
             const assignedTeamLabel = assignedTeam ? assignedTeam.name.split("·")[0]?.trim() ?? assignedTeam.name : "미배치";
