@@ -101,7 +101,7 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
             <Label htmlFor="join-code">수업 코드</Label>
-            <Input id="join-code" placeholder="예: MODUS-7J2Q" />
+            <Input id="join-code" placeholder="예: MODUS7J2Q" />
           </div>
           <div className="rounded-[24px] bg-muted px-5 py-4 text-sm leading-8 text-foreground">
             <p className="font-semibold">수업 코드로 로그인하는 방법</p>
