@@ -466,7 +466,7 @@ export function NoticesDialog({
             <DialogHeader>
               <DialogTitle>공지</DialogTitle>
               <DialogDescription>
-                공지 항목을 선택하면 상세 내용을 모달에서 확인할 수 있습니다.
+                공지 항목을 선택하면 자세한 내용을 바로 확인할 수 있습니다.
               </DialogDescription>
             </DialogHeader>
             {noticeItems.length > 0 ? (
