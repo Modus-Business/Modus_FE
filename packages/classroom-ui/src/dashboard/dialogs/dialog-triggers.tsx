@@ -2,7 +2,17 @@
 
 import type { ComponentProps } from "react";
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronRight, FileUp, Flag, Hash, PencilLine, Plus, Trash2, UserPlus } from "lucide-react";
+import {
+  Bell,
+  ChevronRight,
+  FileUp,
+  Flag,
+  Hash,
+  PencilLine,
+  Plus,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 
 import type { AssignmentSummary, NoticeItem } from "../../lib/mock-data";
 import { Badge } from "../../ui/badge";
@@ -21,7 +31,10 @@ import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
 
-type TriggerButtonProps = Pick<ComponentProps<typeof Button>, "className" | "size" | "variant">;
+type TriggerButtonProps = Pick<
+  ComponentProps<typeof Button>,
+  "className" | "size" | "variant"
+>;
 const NOTICE_EDIT_TEXTAREA_MAX_HEIGHT = 240;
 
 function getAssignmentBadgeVariant(status: string) {
@@ -39,7 +52,10 @@ function regenerateClassCodeValue(currentCode: string) {
   const [prefix, suffix] = currentCode.split("-");
   const nextSuffixLength = suffix?.length ?? 4;
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const nextSuffix = Array.from({ length: nextSuffixLength }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+  const nextSuffix = Array.from(
+    { length: nextSuffixLength },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)],
+  ).join("");
 
   return prefix ? `${prefix}${nextSuffix}` : nextSuffix;
 }
@@ -60,17 +76,27 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
         <Button
           variant={iconOnly ? "ghost" : "default"}
           size={iconOnly ? "icon" : "default"}
-          className={iconOnly ? "size-11 rounded-full text-foreground hover:bg-secondary" : undefined}
+          className={
+            iconOnly
+              ? "size-11 rounded-full text-foreground hover:bg-secondary"
+              : undefined
+          }
           aria-label={iconOnly ? "수업 참여" : undefined}
         >
-          {iconOnly ? <Plus className="size-5" /> : <UserPlus className="size-4" />}
+          {iconOnly ? (
+            <Plus className="size-5" />
+          ) : (
+            <UserPlus className="size-4" />
+          )}
           {!iconOnly ? "수업 참여" : null}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>수업 참여</DialogTitle>
-          <DialogDescription>수업 코드를 입력하기 전에 아래 안내를 먼저 확인해 주세요.</DialogDescription>
+          <DialogDescription>
+            수업 코드를 입력하기 전에 아래 안내를 먼저 확인해 주세요.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
@@ -81,7 +107,10 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
             <p className="font-semibold">수업 코드로 로그인하는 방법</p>
             <ul className="mt-2 list-disc space-y-2 pl-6 text-muted-foreground">
               <li>승인된 계정을 사용하세요.</li>
-              <li>수업 코드는 공백이나 기호를 포함하지 않는 문자 또는 숫자 5~8자리여야 합니다.</li>
+              <li>
+                수업 코드는 공백이나 기호를 포함하지 않는 문자 또는 숫자
+                5~8자리여야 합니다.
+              </li>
             </ul>
           </div>
         </div>
@@ -96,7 +125,11 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
   );
 }
 
-export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
+export function CreateClassDialog({
+  iconOnly = false,
+}: {
+  iconOnly?: boolean;
+}) {
   const [className, setClassName] = useState("");
   const [classDescription, setClassDescription] = useState("");
   const classDescriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -117,7 +150,11 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
         <Button
           variant={iconOnly ? "ghost" : "default"}
           size={iconOnly ? "icon" : "default"}
-          className={iconOnly ? "size-11 rounded-full text-foreground hover:bg-secondary" : undefined}
+          className={
+            iconOnly
+              ? "size-11 rounded-full text-foreground hover:bg-secondary"
+              : undefined
+          }
           aria-label={iconOnly ? "수업 만들기" : undefined}
         >
           <Plus className={iconOnly ? "size-5" : "size-4"} />
@@ -127,7 +164,10 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>새 수업 만들기</DialogTitle>
-          <DialogDescription>수업명과 간단한 수업 소개를 함께 입력해 새 수업의 기본 정보를 정리합니다.</DialogDescription>
+          <DialogDescription>
+            수업명과 간단한 수업 소개를 함께 입력해 새 수업의 기본 정보를
+            정리합니다.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
@@ -200,7 +240,9 @@ export function NoticesDialog({
     textarea.style.height = `${Math.min(textarea.scrollHeight, NOTICE_EDIT_TEXTAREA_MAX_HEIGHT)}px`;
   }, [draftContent, isEditing]);
 
-  const selectedNotice = selectedNoticeId ? noticeItems.find((notice) => notice.id === selectedNoticeId) ?? null : null;
+  const selectedNotice = selectedNoticeId
+    ? (noticeItems.find((notice) => notice.id === selectedNoticeId) ?? null)
+    : null;
   const isDetailView = selectedNotice !== null;
 
   function resetDraft() {
@@ -244,7 +286,9 @@ export function NoticesDialog({
       return;
     }
 
-    setNoticeItems((currentNotices) => currentNotices.filter((notice) => notice.id !== selectedNotice.id));
+    setNoticeItems((currentNotices) =>
+      currentNotices.filter((notice) => notice.id !== selectedNotice.id),
+    );
     setSelectedNoticeId(null);
     setIsDeleteConfirmOpen(false);
     closeEditMode();
@@ -288,7 +332,9 @@ export function NoticesDialog({
               <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                 <div className="grid gap-4 rounded-3xl border border-border/70 bg-background/70 p-5">
                   <div className="grid gap-2">
-                    <Label htmlFor={`notice-edit-title-${selectedNotice.id}`}>공지 제목</Label>
+                    <Label htmlFor={`notice-edit-title-${selectedNotice.id}`}>
+                      공지 제목
+                    </Label>
                     <Input
                       id={`notice-edit-title-${selectedNotice.id}`}
                       value={draftTitle}
@@ -297,7 +343,9 @@ export function NoticesDialog({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor={`notice-edit-content-${selectedNotice.id}`}>공지 본문</Label>
+                    <Label htmlFor={`notice-edit-content-${selectedNotice.id}`}>
+                      공지 본문
+                    </Label>
                     <Textarea
                       ref={noticeEditTextareaRef}
                       id={`notice-edit-content-${selectedNotice.id}`}
@@ -315,7 +363,10 @@ export function NoticesDialog({
                 </Button>
                 <Button
                   onClick={saveNotice}
-                  disabled={draftTitle.trim().length === 0 || draftContent.trim().length === 0}
+                  disabled={
+                    draftTitle.trim().length === 0 ||
+                    draftContent.trim().length === 0
+                  }
                 >
                   저장하기
                 </Button>
@@ -376,20 +427,30 @@ export function NoticesDialog({
                 <DialogClose asChild>
                   <Button variant="outline">닫기</Button>
                 </DialogClose>
-                <Button variant="outline" onClick={() => setSelectedNoticeId(null)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedNoticeId(null)}
+                >
                   목록으로
                 </Button>
               </DialogFooter>
-              <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+              <Dialog
+                open={isDeleteConfirmOpen}
+                onOpenChange={setIsDeleteConfirmOpen}
+              >
                 <DialogContent className="sm:w-[min(92vw,28rem)]">
                   <DialogHeader>
                     <DialogTitle>공지 삭제</DialogTitle>
                     <DialogDescription>
-                      {selectedNotice.title} 공지를 삭제하시겠습니까? 삭제 후에는 목록에서 바로 사라집니다.
+                      {selectedNotice.title} 공지를 삭제하시겠습니까? 삭제
+                      후에는 목록에서 바로 사라집니다.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDeleteConfirmOpen(false)}
+                    >
                       취소
                     </Button>
                     <Button variant="destructive" onClick={deleteNotice}>
@@ -404,7 +465,9 @@ export function NoticesDialog({
           <>
             <DialogHeader>
               <DialogTitle>공지</DialogTitle>
-              <DialogDescription>공지 항목을 선택하면 상세 내용을 모달에서 확인할 수 있습니다.</DialogDescription>
+              <DialogDescription>
+                공지 항목을 선택하면 상세 내용을 모달에서 확인할 수 있습니다.
+              </DialogDescription>
             </DialogHeader>
             {noticeItems.length > 0 ? (
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
@@ -424,7 +487,9 @@ export function NoticesDialog({
                           {getNoticePreviewLine(notice.content, notice.summary)}
                         </p>
                       </div>
-                      <span className="shrink-0 text-xs text-muted-foreground">{notice.date}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {notice.date}
+                      </span>
                     </div>
                   </button>
                 ))}
@@ -470,19 +535,30 @@ export function ClassCodeDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>수업 코드</DialogTitle>
-          <DialogDescription>학생에게 안내할 수업 코드를 여기에서 확인하고 공유해 보세요.</DialogDescription>
+          <DialogDescription>
+            학생에게 안내할 수업 코드를 여기에서 확인하고 공유해 보세요.
+          </DialogDescription>
         </DialogHeader>
         <div className="py-2">
           <div className="rounded-[28px] border border-primary/20 bg-primary/5 px-5 py-5 text-center">
-            <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">Class Code</p>
-            <p className="mt-3 break-all text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{generatedCode}</p>
+            <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
+              Class Code
+            </p>
+            <p className="mt-3 break-all text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              {generatedCode}
+            </p>
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">닫기</Button>
           </DialogClose>
-          <Button variant="outline" onClick={() => setGeneratedCode(regenerateClassCodeValue(generatedCode))}>
+          <Button
+            variant="outline"
+            onClick={() =>
+              setGeneratedCode(regenerateClassCodeValue(generatedCode))
+            }
+          >
             코드 재생성
           </Button>
         </DialogFooter>
@@ -498,7 +574,9 @@ export function AssignmentSummaryDialog({
   assignments: AssignmentSummary[];
   triggerProps?: TriggerButtonProps;
 }) {
-  const pendingCount = assignments.filter((assignment) => assignment.status === "제출 전").length;
+  const pendingCount = assignments.filter(
+    (assignment) => assignment.status === "제출 전",
+  ).length;
 
   return (
     <Dialog>
@@ -512,12 +590,19 @@ export function AssignmentSummaryDialog({
         <div className="border-b border-border/70 px-6 py-6">
           <DialogHeader>
             <DialogTitle>모둠 과제</DialogTitle>
-            <DialogDescription>지금 진행 중인 과제와 마감 일정을 모아서 확인합니다.</DialogDescription>
+            <DialogDescription>
+              지금 진행 중인 과제와 마감 일정을 모아서 확인합니다.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Badge variant={pendingCount > 0 ? "warning" : "success"} className="rounded-full px-3 py-1">
-              {pendingCount > 0 ? `제출 전 ${pendingCount}건` : "급한 제출 없음"}
+            <Badge
+              variant={pendingCount > 0 ? "warning" : "success"}
+              className="rounded-full px-3 py-1"
+            >
+              {pendingCount > 0
+                ? `제출 전 ${pendingCount}건`
+                : "급한 제출 없음"}
             </Badge>
             <Badge variant="outline" className="rounded-full px-3 py-1">
               총 {assignments.length}건
@@ -527,13 +612,23 @@ export function AssignmentSummaryDialog({
 
         <div className="space-y-3 px-6 py-6">
           {assignments.map((assignment) => (
-            <div key={assignment.id} className="rounded-[24px] border border-border/70 bg-background/75 px-5 py-4">
+            <div
+              key={assignment.id}
+              className="rounded-[24px] border border-border/70 bg-background/75 px-5 py-4"
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="font-semibold text-foreground">{assignment.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">마감 · {assignment.dueAt}</p>
+                  <p className="font-semibold text-foreground">
+                    {assignment.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    마감 · {assignment.dueAt}
+                  </p>
                 </div>
-                <Badge variant={getAssignmentBadgeVariant(assignment.status)} className="shrink-0">
+                <Badge
+                  variant={getAssignmentBadgeVariant(assignment.status)}
+                  className="shrink-0"
+                >
                   {assignment.status}
                 </Badge>
               </div>
@@ -571,7 +666,9 @@ export function SubmitAssignmentDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{className} 과제 제출</DialogTitle>
-          <DialogDescription>결과물은 파일 업로드 또는 링크 첨부 방식으로 제출할 수 있습니다.</DialogDescription>
+          <DialogDescription>
+            결과물은 파일 업로드 또는 링크 첨부 방식으로 제출할 수 있습니다.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
@@ -596,19 +693,30 @@ export function SubmitAssignmentDialog({
                 {selectedFileName ? "파일 선택 완료" : "파일 선택 또는 업로드"}
               </span>
               <span className="mt-1 text-xs text-muted-foreground">
-                {selectedFileName ? selectedFileName : "PDF, PPT, 이미지, 압축 파일 등 제출물을 업로드합니다."}
+                {selectedFileName
+                  ? selectedFileName
+                  : "PDF, PPT, 이미지, 압축 파일 등 제출물을 업로드합니다."}
               </span>
             </Label>
-            {selectedFileName ? <p className="text-xs font-medium text-primary">선택된 파일: {selectedFileName}</p> : null}
+            {selectedFileName ? (
+              <p className="text-xs font-medium text-primary">
+                선택된 파일: {selectedFileName}
+              </p>
+            ) : null}
           </div>
           <div className="flex items-center gap-3 py-1">
             <div className="h-px flex-1 bg-border/70" />
-            <span className="text-xs font-medium text-muted-foreground">또는</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              또는
+            </span>
             <div className="h-px flex-1 bg-border/70" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="assignment-link">결과물 링크</Label>
-            <Input id="assignment-link" placeholder="제출할 결과물 링크를 입력하세요" />
+            <Input
+              id="assignment-link"
+              placeholder="제출할 결과물 링크를 입력하세요"
+            />
           </div>
         </div>
         <DialogFooter>
@@ -637,19 +745,24 @@ export function NewNoticeDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="size-4" />
-          새 공지사항
+          <Plus className="size-4" />새 공지사항
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>공지사항 작성</DialogTitle>
-          <DialogDescription>교강사가 클래스 공지를 작성하고 학생에게 바로 안내할 수 있는 입력 UI를 제공합니다.</DialogDescription>
+          <DialogDescription>
+            교강사가 클래스 공지를 작성하고 학생에게 바로 안내할 수 있는 입력
+            UI를 제공합니다.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
             <Label htmlFor="notice-title">공지 제목</Label>
-            <Input id="notice-title" placeholder="예: [필독] 2차 중간 점검 안내" />
+            <Input
+              id="notice-title"
+              placeholder="예: [필독] 2차 중간 점검 안내"
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="notice-body">공지 본문</Label>
