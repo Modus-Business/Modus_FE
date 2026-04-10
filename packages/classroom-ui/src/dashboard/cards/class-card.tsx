@@ -52,8 +52,8 @@ export function ClassCard({ href, name, code, schedule, description, metaLabel, 
           </div>
         ) : null}
       </CardContent>
-      <CardFooter className="mt-auto pt-2 pr-4 sm:pr-16">
-        <Button asChild className="h-11 w-full rounded-xl">
+      <CardFooter className="mt-auto justify-center px-4 pt-2 sm:px-6">
+        <Button asChild className="h-11 w-full max-w-[18rem] rounded-xl">
           <Link href={href}>입장하기</Link>
         </Button>
       </CardFooter>
