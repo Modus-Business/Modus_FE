@@ -41,7 +41,16 @@ function regenerateClassCodeValue(currentCode: string) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const nextSuffix = Array.from({ length: nextSuffixLength }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
 
-  return prefix ? `${prefix}-${nextSuffix}` : nextSuffix;
+  return prefix ? `${prefix}${nextSuffix}` : nextSuffix;
+}
+
+function getNoticePreviewLine(content: string, fallbackSummary?: string) {
+  const firstContentLine = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  return firstContentLine ?? fallbackSummary ?? "";
 }
 
 export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
@@ -90,6 +99,17 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
 export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
   const [className, setClassName] = useState("");
   const [classDescription, setClassDescription] = useState("");
+  const classDescriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const textarea = classDescriptionTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "0px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, NOTICE_EDIT_TEXTAREA_MAX_HEIGHT)}px`;
+  }, [classDescription]);
 
   return (
     <Dialog>
@@ -122,10 +142,12 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
           <div className="grid gap-2">
             <Label htmlFor="class-description">수업 소개</Label>
             <Textarea
+              ref={classDescriptionTextareaRef}
               id="class-description"
               value={classDescription}
               onChange={(event) => setClassDescription(event.target.value)}
               placeholder="예: 서비스 구조 설계와 퍼블리싱을 함께 진행하는 메인 실습 수업"
+              className="min-h-[140px] max-h-[240px] resize-none overflow-y-auto"
             />
           </div>
         </div>
@@ -157,7 +179,6 @@ export function NoticesDialog({
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
-  const [draftSummary, setDraftSummary] = useState("");
   const [draftContent, setDraftContent] = useState("");
   const noticeEditTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -184,13 +205,11 @@ export function NoticesDialog({
 
   function resetDraft() {
     setDraftTitle("");
-    setDraftSummary("");
     setDraftContent("");
   }
 
   function openEditMode(notice: NoticeItem) {
     setDraftTitle(notice.title);
-    setDraftSummary(notice.summary);
     setDraftContent(notice.content);
     setIsEditing(true);
   }
@@ -211,7 +230,7 @@ export function NoticesDialog({
           ? {
               ...notice,
               title: draftTitle.trim(),
-              summary: draftSummary.trim(),
+              summary: getNoticePreviewLine(draftContent, notice.summary),
               content: draftContent.trim(),
             }
           : notice,
@@ -278,15 +297,6 @@ export function NoticesDialog({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor={`notice-edit-summary-${selectedNotice.id}`}>공지 요약</Label>
-                    <Input
-                      id={`notice-edit-summary-${selectedNotice.id}`}
-                      value={draftSummary}
-                      onChange={(event) => setDraftSummary(event.target.value)}
-                      placeholder="목록에 보일 한 줄 요약을 입력하세요"
-                    />
-                  </div>
-                  <div className="grid gap-2">
                     <Label htmlFor={`notice-edit-content-${selectedNotice.id}`}>공지 본문</Label>
                     <Textarea
                       ref={noticeEditTextareaRef}
@@ -305,7 +315,7 @@ export function NoticesDialog({
                 </Button>
                 <Button
                   onClick={saveNotice}
-                  disabled={draftTitle.trim().length === 0 || draftSummary.trim().length === 0 || draftContent.trim().length === 0}
+                  disabled={draftTitle.trim().length === 0 || draftContent.trim().length === 0}
                 >
                   저장하기
                 </Button>
@@ -357,8 +367,7 @@ export function NoticesDialog({
               </DialogHeader>
               <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                 <div className="rounded-3xl border border-border/70 bg-background/70 p-5">
-                  <p className="text-sm leading-6 text-foreground">{selectedNotice.summary}</p>
-                  <div className="mt-4 space-y-4 text-sm leading-7 whitespace-pre-line text-muted-foreground">
+                  <div className="space-y-4 text-sm leading-7 whitespace-pre-line text-muted-foreground">
                     {selectedNotice.content}
                   </div>
                 </div>
@@ -412,7 +421,7 @@ export function NoticesDialog({
                           {notice.title}
                         </p>
                         <p className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm leading-6 text-muted-foreground transition-colors duration-200 group-hover:text-foreground/75 group-focus-visible:text-foreground/75">
-                          {notice.summary}
+                          {getNoticePreviewLine(notice.content, notice.summary)}
                         </p>
                       </div>
                       <span className="shrink-0 text-xs text-muted-foreground">{notice.date}</span>
@@ -611,6 +620,19 @@ export function SubmitAssignmentDialog({
 }
 
 export function NewNoticeDialog() {
+  const [noticeBody, setNoticeBody] = useState("");
+  const noticeCreateTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const textarea = noticeCreateTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "0px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, NOTICE_EDIT_TEXTAREA_MAX_HEIGHT)}px`;
+  }, [noticeBody]);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -622,7 +644,7 @@ export function NewNoticeDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>공지사항 작성</DialogTitle>
-          <DialogDescription>실제 저장 전, 제목/본문/노출 우선순위 중심의 입력 UI를 제공합니다.</DialogDescription>
+          <DialogDescription>교강사가 클래스 공지를 작성하고 학생에게 바로 안내할 수 있는 입력 UI를 제공합니다.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
@@ -631,13 +653,17 @@ export function NewNoticeDialog() {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="notice-body">공지 본문</Label>
-            <Textarea id="notice-body" placeholder="학생에게 전달할 핵심 내용과 제출 기준을 적어주세요." />
+            <Textarea
+              ref={noticeCreateTextareaRef}
+              id="notice-body"
+              value={noticeBody}
+              onChange={(event) => setNoticeBody(event.target.value)}
+              placeholder="학생에게 전달할 핵심 내용과 제출 기준을 적어주세요."
+              className="min-h-[140px] max-h-[240px] resize-none overflow-y-auto"
+            />
           </div>
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">미리보기</Button>
-          </DialogClose>
           <Button>게시하기</Button>
         </DialogFooter>
       </DialogContent>
