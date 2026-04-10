@@ -144,7 +144,7 @@ export function GroupChat({ group, showHeader = true, className }: GroupChatProp
                       message.own ? "justify-end text-right" : "justify-start text-left",
                     )}
                   >
-                    <span className="font-semibold">{message.author}</span>
+                    <span className="font-semibold text-foreground/80">{message.author}</span>
                     <span>{message.time}</span>
                   </div>
                   <div className="relative min-w-0 self-stretch">
