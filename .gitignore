@@ -19,3 +19,4 @@ coverage
 !.codex/prompts/
 !.codex/prompts/**
 .vercel
+apps/*/next-env.d.ts
