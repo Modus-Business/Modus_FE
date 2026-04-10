@@ -1,8 +1,8 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { useState } from "react";
-import { Bell, FileUp, Flag, Hash, Plus, UserPlus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bell, ChevronRight, FileUp, Flag, Hash, PencilLine, Plus, Trash2, UserPlus } from "lucide-react";
 
 import type { AssignmentSummary, NoticeItem } from "../../lib/mock-data";
 import { Badge } from "../../ui/badge";
@@ -22,6 +22,7 @@ import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
 
 type TriggerButtonProps = Pick<ComponentProps<typeof Button>, "className" | "size" | "variant">;
+const NOTICE_EDIT_TEXTAREA_MAX_HEIGHT = 240;
 
 function getAssignmentBadgeVariant(status: string) {
   switch (status) {
@@ -32,6 +33,15 @@ function getAssignmentBadgeVariant(status: string) {
     default:
       return "success" as const;
   }
+}
+
+function regenerateClassCodeValue(currentCode: string) {
+  const [prefix, suffix] = currentCode.split("-");
+  const nextSuffixLength = suffix?.length ?? 4;
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const nextSuffix = Array.from({ length: nextSuffixLength }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+
+  return prefix ? `${prefix}-${nextSuffix}` : nextSuffix;
 }
 
 export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
@@ -79,6 +89,7 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
 
 export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
   const [className, setClassName] = useState("");
+  const [classDescription, setClassDescription] = useState("");
 
   return (
     <Dialog>
@@ -96,7 +107,7 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>새 수업 만들기</DialogTitle>
-          <DialogDescription>교강사가 수업명만 입력하면 새 수업을 바로 만들 수 있습니다.</DialogDescription>
+          <DialogDescription>수업명과 간단한 수업 소개를 함께 입력해 새 수업의 기본 정보를 정리합니다.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
@@ -106,6 +117,15 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
               value={className}
               onChange={(event) => setClassName(event.target.value)}
               placeholder="예: 프로덕트 스튜디오"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="class-description">수업 소개</Label>
+            <Textarea
+              id="class-description"
+              value={classDescription}
+              onChange={(event) => setClassDescription(event.target.value)}
+              placeholder="예: 서비스 구조 설계와 퍼블리싱을 함께 진행하는 메인 실습 수업"
             />
           </div>
         </div>
@@ -123,40 +143,295 @@ export function CreateClassDialog({ iconOnly = false }: { iconOnly?: boolean }) 
 export function NoticesDialog({
   notices,
   triggerProps,
+  detailTitlePrefix,
+  allowManage = false,
 }: {
   notices: NoticeItem[];
   triggerProps?: TriggerButtonProps;
+  detailTitlePrefix?: string;
+  allowManage?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const [noticeItems, setNoticeItems] = useState(notices);
+  const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftSummary, setDraftSummary] = useState("");
+  const [draftContent, setDraftContent] = useState("");
+  const noticeEditTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    setNoticeItems(notices);
+  }, [notices]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+
+    const textarea = noticeEditTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "0px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, NOTICE_EDIT_TEXTAREA_MAX_HEIGHT)}px`;
+  }, [draftContent, isEditing]);
+
+  const selectedNotice = selectedNoticeId ? noticeItems.find((notice) => notice.id === selectedNoticeId) ?? null : null;
+  const isDetailView = selectedNotice !== null;
+
+  function resetDraft() {
+    setDraftTitle("");
+    setDraftSummary("");
+    setDraftContent("");
+  }
+
+  function openEditMode(notice: NoticeItem) {
+    setDraftTitle(notice.title);
+    setDraftSummary(notice.summary);
+    setDraftContent(notice.content);
+    setIsEditing(true);
+  }
+
+  function closeEditMode() {
+    setIsEditing(false);
+    resetDraft();
+  }
+
+  function saveNotice() {
+    if (!selectedNotice) {
+      return;
+    }
+
+    setNoticeItems((currentNotices) =>
+      currentNotices.map((notice) =>
+        notice.id === selectedNotice.id
+          ? {
+              ...notice,
+              title: draftTitle.trim(),
+              summary: draftSummary.trim(),
+              content: draftContent.trim(),
+            }
+          : notice,
+      ),
+    );
+    closeEditMode();
+  }
+
+  function deleteNotice() {
+    if (!selectedNotice) {
+      return;
+    }
+
+    setNoticeItems((currentNotices) => currentNotices.filter((notice) => notice.id !== selectedNotice.id));
+    setSelectedNoticeId(null);
+    setIsDeleteConfirmOpen(false);
+    closeEditMode();
+  }
+
+  function requestDeleteNotice() {
+    if (!selectedNotice) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(true);
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setSelectedNoticeId(null);
+      setIsDeleteConfirmOpen(false);
+      closeEditMode();
+    }
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" {...triggerProps}>
           <Bell className="size-4" />
           공지
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>공지</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          {notices.map((notice) => (
-            <div key={notice.id} className="rounded-3xl border border-border/70 bg-background/70 p-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                <div>
-                  <p className="font-semibold text-foreground">{notice.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{notice.summary}</p>
+      <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:w-[min(92vw,44rem)]">
+        {isDetailView && selectedNotice ? (
+          isEditing ? (
+            <>
+              <DialogHeader className="gap-3 pr-8">
+                <div className="space-y-2">
+                  <DialogTitle>공지 수정</DialogTitle>
+                  <DialogDescription>{selectedNotice.date}</DialogDescription>
                 </div>
-                <span className="text-xs text-muted-foreground">{notice.date}</span>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                <div className="grid gap-4 rounded-3xl border border-border/70 bg-background/70 p-5">
+                  <div className="grid gap-2">
+                    <Label htmlFor={`notice-edit-title-${selectedNotice.id}`}>공지 제목</Label>
+                    <Input
+                      id={`notice-edit-title-${selectedNotice.id}`}
+                      value={draftTitle}
+                      onChange={(event) => setDraftTitle(event.target.value)}
+                      placeholder="공지 제목을 입력하세요"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor={`notice-edit-summary-${selectedNotice.id}`}>공지 요약</Label>
+                    <Input
+                      id={`notice-edit-summary-${selectedNotice.id}`}
+                      value={draftSummary}
+                      onChange={(event) => setDraftSummary(event.target.value)}
+                      placeholder="목록에 보일 한 줄 요약을 입력하세요"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor={`notice-edit-content-${selectedNotice.id}`}>공지 본문</Label>
+                    <Textarea
+                      ref={noticeEditTextareaRef}
+                      id={`notice-edit-content-${selectedNotice.id}`}
+                      value={draftContent}
+                      onChange={(event) => setDraftContent(event.target.value)}
+                      placeholder="학생에게 전달할 공지 본문을 입력하세요"
+                      className="min-h-[140px] max-h-[240px] resize-none overflow-y-auto"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">닫기</Button>
-          </DialogClose>
-        </DialogFooter>
+              <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 border-t border-border/70 bg-card/95 px-6 py-4 backdrop-blur">
+                <Button variant="outline" onClick={closeEditMode}>
+                  취소
+                </Button>
+                <Button
+                  onClick={saveNotice}
+                  disabled={draftTitle.trim().length === 0 || draftSummary.trim().length === 0 || draftContent.trim().length === 0}
+                >
+                  저장하기
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader className="gap-3 pr-8">
+                <div className="space-y-2">
+                  <DialogTitle className="flex items-center gap-2">
+                    {detailTitlePrefix ? (
+                      <>
+                        <span>{detailTitlePrefix}</span>
+                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                        <span>{selectedNotice.title}</span>
+                      </>
+                    ) : (
+                      selectedNotice.title
+                    )}
+                  </DialogTitle>
+                  <div className="flex items-center justify-between gap-3">
+                    <DialogDescription>{selectedNotice.date}</DialogDescription>
+                    {allowManage ? (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          aria-label="공지 수정"
+                          onClick={() => openEditMode(selectedNotice)}
+                        >
+                          <PencilLine className="size-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 rounded-full text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                          aria-label="공지 삭제"
+                          onClick={requestDeleteNotice}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                <div className="rounded-3xl border border-border/70 bg-background/70 p-5">
+                  <p className="text-sm leading-6 text-foreground">{selectedNotice.summary}</p>
+                  <div className="mt-4 space-y-4 text-sm leading-7 whitespace-pre-line text-muted-foreground">
+                    {selectedNotice.content}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">닫기</Button>
+                </DialogClose>
+                <Button variant="outline" onClick={() => setSelectedNoticeId(null)}>
+                  목록으로
+                </Button>
+              </DialogFooter>
+              <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <DialogContent className="sm:w-[min(92vw,28rem)]">
+                  <DialogHeader>
+                    <DialogTitle>공지 삭제</DialogTitle>
+                    <DialogDescription>
+                      {selectedNotice.title} 공지를 삭제하시겠습니까? 삭제 후에는 목록에서 바로 사라집니다.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+                      취소
+                    </Button>
+                    <Button variant="destructive" onClick={deleteNotice}>
+                      삭제하기
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+          )
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>공지</DialogTitle>
+              <DialogDescription>공지 항목을 선택하면 상세 내용을 모달에서 확인할 수 있습니다.</DialogDescription>
+            </DialogHeader>
+            {noticeItems.length > 0 ? (
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                {noticeItems.map((notice) => (
+                  <button
+                    key={notice.id}
+                    type="button"
+                    onClick={() => setSelectedNoticeId(notice.id)}
+                    className="group w-full rounded-3xl border border-border/70 bg-background/70 p-4 text-left transition-[border-color,background-color,box-shadow] duration-200 hover:border-primary/35 hover:bg-primary/[0.05] hover:shadow-[0_14px_32px_rgba(91,132,255,0.08)] focus-visible:border-primary/45 focus-visible:bg-primary/[0.06] focus-visible:ring-2 focus-visible:ring-primary/15 focus-visible:outline-none"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground transition-colors duration-200 group-hover:text-primary group-focus-visible:text-primary">
+                          {notice.title}
+                        </p>
+                        <p className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm leading-6 text-muted-foreground transition-colors duration-200 group-hover:text-foreground/75 group-focus-visible:text-foreground/75">
+                          {notice.summary}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-xs text-muted-foreground">{notice.date}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-border/70 bg-background/60 px-5 py-8 text-center text-sm leading-6 text-muted-foreground">
+                등록된 공지사항이 없습니다.
+              </div>
+            )}
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">닫기</Button>
+              </DialogClose>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -169,6 +444,12 @@ export function ClassCodeDialog({
   classCode: string;
   triggerProps?: TriggerButtonProps;
 }) {
+  const [generatedCode, setGeneratedCode] = useState(classCode);
+
+  useEffect(() => {
+    setGeneratedCode(classCode);
+  }, [classCode]);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -185,13 +466,16 @@ export function ClassCodeDialog({
         <div className="py-2">
           <div className="rounded-[28px] border border-primary/20 bg-primary/5 px-5 py-5 text-center">
             <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">Class Code</p>
-            <p className="mt-3 break-all text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{classCode}</p>
+            <p className="mt-3 break-all text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{generatedCode}</p>
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">닫기</Button>
           </DialogClose>
+          <Button variant="outline" onClick={() => setGeneratedCode(regenerateClassCodeValue(generatedCode))}>
+            코드 재생성
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
