@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 
 import { AppShell } from "@modus/classroom-ui";
 import "./globals.css";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <Providers>
           <AppShell role="teacher">{children}</AppShell>
+          <Toaster position="top-center" richColors />
         </Providers>
       </body>
     </html>

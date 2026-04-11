@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { ApiClientError, createAppBrowserClient } from "@modus/api-client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { ClassCard, CreateClassDialog, PageHeader, teacherProfile } from "@modus/classroom-ui";
 
@@ -25,11 +26,19 @@ type ClassesResponse = {
   classes: ClassSummaryDto[];
 };
 
+type CreateClassRequestDto = {
+  name: string;
+  description: string;
+};
+
+type CreateClassResponseDto = {
+  class: ClassSummaryDto;
+};
+
 type ClassesQueryError = Error & {
   status?: number;
 };
 
-const webBaseUrl = process.env.NEXT_PUBLIC_WEB ?? "http://localhost:3000";
 const appClient = createAppBrowserClient();
 
 async function fetchClasses(): Promise<ClassesResponse> {
@@ -48,9 +57,34 @@ async function fetchClasses(): Promise<ClassesResponse> {
 }
 
 export default function TeacherClassesPage() {
+  const queryClient = useQueryClient();
   const { data, error, isLoading } = useQuery<ClassesResponse, ClassesQueryError>({
     queryKey: ["teacher-classes"],
     queryFn: fetchClasses,
+  });
+
+  const createClassMutation = useMutation({
+    mutationFn: async (payload: CreateClassRequestDto) => {
+      const response = await appClient.post<CreateClassResponseDto>("/api/classes", payload);
+      return response.data;
+    },
+    onSuccess: async () => {
+      toast.success("수업이 생성되었습니다.");
+      await queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
+    },
+    onError: (mutationError) => {
+      if (mutationError instanceof ApiClientError) {
+        if (mutationError.status === 401 || mutationError.status === 403) {
+          toast.error("수업 생성 권한이 없습니다.");
+          return;
+        }
+
+        toast.error(mutationError.message);
+        return;
+      }
+
+      toast.error("수업 생성에 실패했습니다.");
+    },
   });
 
   React.useEffect(() => {
@@ -59,7 +93,7 @@ export default function TeacherClassesPage() {
     }
 
     if (error.status === 401 || error.status === 403) {
-      window.location.assign(`${webBaseUrl}/auth`);
+      toast.error("수업 목록을 조회할 권한이 없습니다. 로그인 상태나 권한을 확인해 주세요.");
     }
   }, [error]);
 
@@ -73,7 +107,14 @@ export default function TeacherClassesPage() {
         profileName={teacherProfile.realName}
         profileDescriptor={teacherProfile.descriptor}
         showProfile={false}
-        actions={<CreateClassDialog />}
+        actions={
+          <CreateClassDialog
+            pending={createClassMutation.isPending}
+            onSubmit={async (payload) => {
+              await createClassMutation.mutateAsync(payload);
+            }}
+          />
+        }
         className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />
       <section className="bg-background/60 p-3 sm:p-5 lg:p-6">

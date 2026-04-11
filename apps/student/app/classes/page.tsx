@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ApiClientError, createAppBrowserClient } from "@modus/api-client";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { ClassCard, PageHeader, studentProfile } from "@modus/classroom-ui";
 
@@ -29,7 +30,6 @@ type ClassesQueryError = Error & {
   status?: number;
 };
 
-const webBaseUrl = process.env.NEXT_PUBLIC_WEB ?? "http://localhost:3000";
 const appClient = createAppBrowserClient();
 
 async function fetchClasses(): Promise<ClassesResponse> {
@@ -59,7 +59,7 @@ export default function StudentClassesPage() {
     }
 
     if (error.status === 401 || error.status === 403) {
-      window.location.assign(`${webBaseUrl}/auth`);
+      toast.error("수업 목록을 조회할 권한이 없습니다. 로그인 상태나 권한을 확인해 주세요.");
     }
   }, [error]);
 
