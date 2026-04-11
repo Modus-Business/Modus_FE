@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookMarked, Layers3, LogOut, Menu, Settings } from "lucide-react";
@@ -35,8 +36,30 @@ export function SidebarNav({
   onNavigate,
   className,
 }: SidebarNavProps) {
+  const [logoutPending, setLogoutPending] = useState(false);
   const pathname = usePathname();
   const items = navConfig[role];
+  const webBaseUrl = process.env.NEXT_PUBLIC_WEB ?? "http://localhost:3000";
+
+  const handleLogout = async () => {
+    if (logoutPending) {
+      return;
+    }
+
+    setLogoutPending(true);
+    onNavigate?.();
+
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Redirect to the auth hub even if backend logout fails locally.
+    }
+
+    window.location.assign(`${webBaseUrl}/auth`);
+  };
 
   return (
     <aside
@@ -92,15 +115,20 @@ export function SidebarNav({
           <Button
             variant="outline"
             className="h-11 w-full justify-start rounded-2xl hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:h-12"
+            onClick={handleLogout}
+            disabled={logoutPending}
           >
             <LogOut className="size-4" />
-            로그아웃
+            {logoutPending ? "로그아웃 중..." : "로그아웃"}
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="icon"
             className="size-12 rounded-[20px] text-sidebar-foreground hover:bg-red-50 hover:text-red-600 sm:size-14"
+            onClick={handleLogout}
+            disabled={logoutPending}
+            aria-label={logoutPending ? "로그아웃 중" : "로그아웃"}
           >
             <LogOut className="size-5" />
           </Button>
