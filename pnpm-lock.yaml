@@ -103,6 +103,9 @@ importers:
       '@modus/classroom-ui':
         specifier: workspace:*
         version: link:../../packages/classroom-ui
+      '@next/env':
+        specifier: ^16.2.3
+        version: 16.2.3
       '@tanstack/react-query':
         specifier: ^5.97.0
         version: 5.97.0(react@19.2.4)
@@ -487,6 +490,9 @@ packages:
 
   '@next/env@16.2.2':
     resolution: {integrity: sha512-LqSGz5+xGk9EL/iBDr2yo/CgNQV6cFsNhRR2xhSXYh7B/hb4nePCxlmDvGEKG30NMHDFf0raqSyOZiQrO7BkHQ==}
+
+  '@next/env@16.2.3':
+    resolution: {integrity: sha512-ZWXyj4uNu4GCWQw9cjRxWlbD+33mcDszIo9iQxFnBX3Wmgq9ulaSJcl6VhuWx5pCWqqD+9W6Wfz7N0lM5lYPMA==}
 
   '@next/eslint-plugin-next@16.2.2':
     resolution: {integrity: sha512-IOPbWzDQ+76AtjZioaCjpIY72xNSDMnarZ2GMQ4wjNLvnJEJHqxQwGFhgnIWLV9klb4g/+amg88Tk5OXVpyLTw==}
@@ -2744,6 +2750,8 @@ snapshots:
     optional: true
 
   '@next/env@16.2.2': {}
+
+  '@next/env@16.2.3': {}
 
   '@next/eslint-plugin-next@16.2.2':
     dependencies:
