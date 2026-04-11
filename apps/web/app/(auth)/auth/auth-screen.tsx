@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ApiClientError, createAppBrowserClient } from "@modus/api-client";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowUpRight, ChevronLeft, GraduationCap, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ const layerClassName =
   "flex h-full min-h-full w-full items-center justify-center overflow-hidden p-3 sm:p-4 lg:absolute lg:inset-0 lg:grid lg:grid-cols-[1.04fr_0.96fr] lg:gap-5 lg:p-0 xl:gap-6";
 const studentDestination = process.env.NEXT_PUBLIC_STUDENT;
 const teacherDestination = process.env.NEXT_PUBLIC_TEACHER;
+const appClient = createAppBrowserClient();
 
 const emptyLoginForm: LoginForm = {
   email: "",
@@ -76,23 +78,8 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function readErrorMessage(payload: unknown, fallback: string) {
-  if (!payload || typeof payload !== "object") {
-    return fallback;
-  }
-
-  const message = (payload as { message?: unknown }).message;
-
-  if (Array.isArray(message)) {
-    const normalized = message.filter((entry): entry is string => typeof entry === "string");
-    return normalized[0] ?? fallback;
-  }
-
-  if (typeof message === "string" && message.trim()) {
-    return message;
-  }
-
-  return fallback;
+function readClientError(error: unknown, fallback: string) {
+  return error instanceof ApiClientError ? error.message : fallback;
 }
 
 function getDestinationForRole(role: AuthRole) {
@@ -167,28 +154,6 @@ function FieldError({ message }: { message?: string }) {
   return <p className="mt-2 text-sm leading-5 text-rose-600">{message}</p>;
 }
 
-async function postJson<TResponse>(url: string, body: unknown): Promise<TResponse> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  const payload = (await response.json().catch(() => null)) as TResponse | null;
-
-  if (!response.ok) {
-    throw payload;
-  }
-
-  if (!payload) {
-    throw new Error("응답 본문이 비어 있습니다.");
-  }
-
-  return payload;
-}
-
 export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
   const [mode, setMode] = React.useState<AuthMode>(initialMode);
   const [signupRole, setSignupRole] = React.useState<SignupRole | null>(null);
@@ -209,15 +174,17 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
   }, []);
 
   const loginMutation = useMutation({
-    mutationFn: (form: LoginForm) => postJson<LoginSuccessPayload>("/api/auth/login", form),
+    mutationFn: async (form: LoginForm) => (await appClient.post<LoginSuccessPayload>("/api/auth/login", form)).data,
   });
 
   const signupMutation = useMutation({
-    mutationFn: (payload: SignupForm & { role: SignupRole }) => postJson<SignupSuccessPayload>("/api/auth/signup", payload),
+    mutationFn: async (payload: SignupForm & { role: SignupRole }) =>
+      (await appClient.post<SignupSuccessPayload>("/api/auth/signup", payload)).data,
   });
 
   const sendVerificationMutation = useMutation({
-    mutationFn: (payload: { email: string }) => postJson<SendVerificationSuccessPayload>("/api/auth/signup/send-verification", payload),
+    mutationFn: async (payload: { email: string }) =>
+      (await appClient.post<SendVerificationSuccessPayload>("/api/auth/signup/send-verification", payload)).data,
   });
 
   const openSignup = React.useCallback(() => {
@@ -285,7 +252,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
 
       window.location.assign(destination);
     } catch (error) {
-      showLoginError(readErrorMessage(error, "로그인 요청 중 문제가 발생했습니다."));
+      showLoginError(readClientError(error, "로그인 요청 중 문제가 발생했습니다."));
     }
   };
 
@@ -307,7 +274,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
       setVerificationRequested(true);
       toast.success("인증번호를 이메일로 보냈습니다.");
     } catch (error) {
-      showSignupError(readErrorMessage(error, "인증번호 발송 중 문제가 발생했습니다."));
+      showSignupError(readClientError(error, "인증번호 발송 중 문제가 발생했습니다."));
     }
   };
 
@@ -356,7 +323,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
       });
       toast.success("회원가입이 완료되었습니다. 로그인하세요.");
     } catch (error) {
-      showSignupError(readErrorMessage(error, "회원가입 요청 중 문제가 발생했습니다."));
+      showSignupError(readClientError(error, "회원가입 요청 중 문제가 발생했습니다."));
     }
   };
 

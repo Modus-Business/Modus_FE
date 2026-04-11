@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { ApiClientError, createBackendServerClient, extractApiMessage } from "@modus/api-client";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASEURL ??
@@ -118,66 +119,49 @@ export async function getSessionFromCookies(): Promise<SessionPayload> {
   return getSessionFromAccessToken(cookieStore.get(ACCESS_TOKEN_COOKIE)?.value);
 }
 
-export function getErrorMessage(payload: unknown, fallback: string) {
-  if (!payload || typeof payload !== "object") {
-    return fallback;
-  }
-
-  const message = (payload as { message?: unknown }).message;
-
-  if (Array.isArray(message)) {
-    const normalized = message.filter((entry): entry is string => typeof entry === "string");
-    return normalized[0] ?? fallback;
-  }
-
-  if (typeof message === "string" && message.trim()) {
-    return message;
-  }
-
-  return fallback;
-}
+const backendClient = createBackendServerClient({ baseURL: API_BASE_URL });
 
 export async function postToBackend<TResponse>(
   path: string,
   body: unknown,
 ): Promise<BackendSuccess<TResponse> | BackendFailure> {
-  let response: Response;
-
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-      body: JSON.stringify(body),
-    });
-  } catch {
-    return {
-      ok: false,
-      status: 502,
-      message: "인증 서버에 연결하지 못했습니다.",
-      payload: null,
-    };
-  }
+    const response = await backendClient.post<BackendEnvelope<TResponse>>(path, body);
 
-  const payload = (await response.json().catch(() => null)) as BackendEnvelope<TResponse> | null;
+    if (!response.data?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: "요청 처리에 실패했습니다.",
+        payload: response.data ?? null,
+      };
+    }
 
-  if (!response.ok || !payload?.data) {
     return {
-      ok: false,
+      ok: true,
       status: response.status,
-      message: getErrorMessage(payload, "요청 처리에 실패했습니다."),
-      payload,
+      data: response.data.data,
+      payload: response.data,
+    };
+  } catch (error) {
+    if (!(error instanceof ApiClientError)) {
+      return {
+        ok: false,
+        status: 502,
+        message: "인증 서버에 연결하지 못했습니다.",
+        payload: null,
+      };
+    }
+
+    const payload = error.payload as BackendEnvelope<unknown> | null | undefined;
+
+    return {
+      ok: false,
+      status: error.status,
+      message: extractApiMessage(payload, error.message),
+      payload: payload ?? null,
     };
   }
-
-  return {
-    ok: true,
-    status: response.status,
-    data: payload.data,
-    payload,
-  };
 }
 
 export function setAuthCookies(response: NextResponse, tokens: TokenPair) {
