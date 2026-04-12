@@ -16,6 +16,7 @@ type TeamArrangementBoardProps = {
   classroom: TeacherClassroom;
   createGroupPending?: boolean;
   updateGroupPending?: boolean;
+  deleteGroupPending?: boolean;
   onCreateGroup?: (payload: { name: string }) => Promise<{
     id: string;
     name: string;
@@ -30,6 +31,7 @@ type TeamArrangementBoardProps = {
     name: string;
     studentIds: string[];
   }) => Promise<void> | void;
+  onDeleteGroup?: (payload: { groupId: string }) => Promise<void> | void;
 };
 
 type ArrangementTeam = TeacherClassroom["teams"][number];
@@ -79,8 +81,10 @@ export function TeamArrangementBoard({
   classroom,
   createGroupPending = false,
   updateGroupPending = false,
+  deleteGroupPending = false,
   onCreateGroup,
   onUpdateGroup,
+  onDeleteGroup,
 }: TeamArrangementBoardProps) {
   const [teams, setTeams] = useState<ArrangementTeam[]>(() => cloneTeams(classroom.teams));
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null);
@@ -202,6 +206,22 @@ export function TeamArrangementBoard({
     setTeams((currentTeams) => currentTeams.filter((team) => team.id !== teamId));
     setActiveDropZone((current) => (current === teamId ? null : current));
     setPendingDeleteTeamId((current) => (current === teamId ? null : current));
+  };
+
+  const deleteGroup = async (teamId: string) => {
+    if (deleteGroupPending) {
+      return;
+    }
+
+    if (onDeleteGroup) {
+      try {
+        await onDeleteGroup({ groupId: teamId });
+      } catch {
+        return;
+      }
+    }
+
+    removeGroup(teamId);
   };
 
   const pendingDeleteTeam = teams.find((team) => team.id === pendingDeleteTeamId) ?? null;
@@ -346,13 +366,14 @@ export function TeamArrangementBoard({
             </DialogClose>
             <Button
               variant="destructive"
+              disabled={deleteGroupPending}
               onClick={() => {
                 if (pendingDeleteTeam) {
-                  removeGroup(pendingDeleteTeam.id);
+                  void deleteGroup(pendingDeleteTeam.id);
                 }
               }}
             >
-              삭제하기
+              {deleteGroupPending ? "삭제 중..." : "삭제하기"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -473,6 +494,7 @@ export function TeamArrangementBoard({
                       size="icon"
                       className="size-9 shrink-0 rounded-full text-muted-foreground hover:bg-red-50 hover:text-red-600"
                       aria-label={`${team.name} 삭제`}
+                      disabled={deleteGroupPending}
                       onClick={() => setPendingDeleteTeamId(team.id)}
                     >
                       <Trash2 className="size-4" />

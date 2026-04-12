@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { TeamArrangementBoard, type TeacherClassroom } from "@modus/classroom-ui";
 
 import { useClassParticipantsQuery } from "../../../../hooks/use-create-class";
-import { useCreateGroupMutation, useUpdateGroupMutation } from "../../../../hooks/use-create-group";
+import { useCreateGroupMutation, useDeleteGroupMutation, useUpdateGroupMutation } from "../../../../hooks/use-create-group";
 import type { ClassParticipantItem } from "../../../../lib/classes/service";
 
 type TeamArrangementPanelProps = {
@@ -78,6 +78,7 @@ export function TeamArrangementPanel({ classroom }: TeamArrangementPanelProps) {
   const participantsQuery = useClassParticipantsQuery(classroom.id);
   const createGroupMutation = useCreateGroupMutation();
   const updateGroupMutation = useUpdateGroupMutation();
+  const deleteGroupMutation = useDeleteGroupMutation(classroom.id);
   const boardClassroom = participantsQuery.data
     ? buildClassroomFromParticipants(classroom, participantsQuery.data.participants)
     : classroom;
@@ -87,6 +88,7 @@ export function TeamArrangementPanel({ classroom }: TeamArrangementPanelProps) {
       classroom={boardClassroom}
       createGroupPending={createGroupMutation.isPending}
       updateGroupPending={updateGroupMutation.isPending}
+      deleteGroupPending={deleteGroupMutation.isPending}
       onCreateGroup={async ({ name }) => {
         try {
           const response = await createGroupMutation.mutateAsync({
@@ -114,6 +116,15 @@ export function TeamArrangementPanel({ classroom }: TeamArrangementPanelProps) {
             },
           });
           toast.success("모둠이 수정되었습니다.");
+        } catch (error) {
+          toast.error(readErrorMessage(error));
+          throw error;
+        }
+      }}
+      onDeleteGroup={async ({ groupId }) => {
+        try {
+          await deleteGroupMutation.mutateAsync(groupId);
+          toast.success("모둠이 삭제되었습니다.");
         } catch (error) {
           toast.error(readErrorMessage(error));
           throw error;

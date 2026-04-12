@@ -3,7 +3,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { teacherGroupsApiClient } from "../lib/groups/client";
-import type { CreateGroupRequest, CreateGroupResponseData, UpdateGroupRequest } from "../lib/groups/service";
+import type {
+  CreateGroupRequest,
+  CreateGroupResponseData,
+  DeleteGroupResponseData,
+  UpdateGroupRequest,
+} from "../lib/groups/service";
 
 type CreateGroupPayload = {
   group: CreateGroupResponseData;
@@ -11,6 +16,10 @@ type CreateGroupPayload = {
 
 type UpdateGroupPayload = {
   group: CreateGroupResponseData;
+};
+
+type DeleteGroupPayload = {
+  result: DeleteGroupResponseData;
 };
 
 export function useCreateGroupMutation() {
@@ -29,6 +38,19 @@ export function useUpdateGroupMutation() {
     onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({ queryKey: ["teacher-class-participants", data.group.classId] });
       await queryClient.invalidateQueries({ queryKey: ["teacher-group-detail", variables.groupId] });
+    },
+  });
+}
+
+export function useDeleteGroupMutation(classId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (groupId: string) =>
+      (await teacherGroupsApiClient.delete<DeleteGroupPayload>(`/api/groups/${encodeURIComponent(groupId)}`)).data,
+    onSuccess: async (_data, groupId) => {
+      await queryClient.invalidateQueries({ queryKey: ["teacher-class-participants", classId] });
+      await queryClient.invalidateQueries({ queryKey: ["teacher-group-detail", groupId] });
     },
   });
 }
