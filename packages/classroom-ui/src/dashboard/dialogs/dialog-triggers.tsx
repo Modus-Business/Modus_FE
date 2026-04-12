@@ -772,7 +772,15 @@ export function SubmitAssignmentDialog({
   );
 }
 
-export function NewNoticeDialog() {
+export function NewNoticeDialog({
+  pending = false,
+  onSubmit,
+}: {
+  pending?: boolean;
+  onSubmit?: (payload: { title: string; content: string }) => Promise<void> | void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [noticeTitle, setNoticeTitle] = useState("");
   const [noticeBody, setNoticeBody] = useState("");
   const noticeCreateTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -786,8 +794,32 @@ export function NewNoticeDialog() {
     textarea.style.height = `${Math.min(textarea.scrollHeight, NOTICE_EDIT_TEXTAREA_MAX_HEIGHT)}px`;
   }, [noticeBody]);
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextTitle = noticeTitle.trim();
+    const nextContent = noticeBody.trim();
+
+    if (!nextTitle || !nextContent || !onSubmit) {
+      return;
+    }
+
+    try {
+      await onSubmit({
+        title: nextTitle,
+        content: nextContent,
+      });
+    } catch {
+      return;
+    }
+
+    setNoticeTitle("");
+    setNoticeBody("");
+    setOpen(false);
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />새 공지사항
@@ -801,11 +833,13 @@ export function NewNoticeDialog() {
             UI를 제공합니다.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-2">
+        <form className="grid gap-4 py-2" onSubmit={handleSubmit}>
           <div className="grid gap-2">
             <Label htmlFor="notice-title">공지 제목</Label>
             <Input
               id="notice-title"
+              value={noticeTitle}
+              onChange={(event) => setNoticeTitle(event.target.value)}
               placeholder="예: [필독] 2차 중간 점검 안내"
             />
           </div>
@@ -820,10 +854,12 @@ export function NewNoticeDialog() {
               className="min-h-[140px] max-h-[240px] resize-none overflow-y-auto"
             />
           </div>
-        </div>
-        <DialogFooter>
-          <Button>게시하기</Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="submit" disabled={noticeTitle.trim().length === 0 || noticeBody.trim().length === 0 || pending}>
+              {pending ? "게시 중..." : "게시하기"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

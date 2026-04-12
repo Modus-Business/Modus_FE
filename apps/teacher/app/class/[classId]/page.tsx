@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 
-import { NewNoticeDialog, NoticesDialog, PageHeader, teacherProfile } from "@modus/classroom-ui";
+import { PageHeader, teacherProfile } from "@modus/classroom-ui";
 import { getTeacherClassroomForRoute } from "../../../lib/classes/lookup";
 import { ClassCodeAction } from "./class-code-action";
 import { GroupStatusSection } from "./group-status-section";
+import { NoticeActions } from "./notice-actions";
 
 type TeacherClassPageProps = {
   params: Promise<{ classId: string }>;
@@ -22,7 +23,7 @@ export default async function TeacherClassPage({ params }: TeacherClassPageProps
         profileName={teacherProfile.realName}
         profileDescriptor={teacherProfile.descriptor}
         showProfile={false}
-        actions={<><ClassCodeAction classId={classId} classCode={classroom.code} /><NoticesDialog notices={classroom.notices} detailTitlePrefix="공지" allowManage /><NewNoticeDialog /></>}
+        actions={<><ClassCodeAction classId={classId} classCode={classroom.code} /><NoticeActions classId={classId} initialNotices={classroom.notices} /></>}
         className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />
 
