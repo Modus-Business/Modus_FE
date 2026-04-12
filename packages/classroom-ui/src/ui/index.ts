@@ -5,5 +5,6 @@ export * from "./card";
 export * from "./dialog";
 export * from "./input";
 export * from "./label";
+export * from "./password-visibility-button";
 export * from "./separator";
 export * from "./textarea";

@@ -7,6 +7,7 @@ export * from "./ui/card";
 export * from "./ui/dialog";
 export * from "./ui/input";
 export * from "./ui/label";
+export * from "./ui/password-visibility-button";
 export * from "./ui/separator";
 export * from "./ui/textarea";
 export * from "./dashboard/layout/app-shell";
