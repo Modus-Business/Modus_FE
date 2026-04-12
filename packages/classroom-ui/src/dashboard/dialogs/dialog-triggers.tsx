@@ -127,14 +127,9 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
 
 export function CreateClassDialog({
   iconOnly = false,
-  onSubmit,
-  pending = false,
 }: {
   iconOnly?: boolean;
-  onSubmit?: (payload: { name: string; description: string }) => Promise<void>;
-  pending?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   const [className, setClassName] = useState("");
   const [classDescription, setClassDescription] = useState("");
   const classDescriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -149,23 +144,8 @@ export function CreateClassDialog({
     textarea.style.height = `${Math.min(textarea.scrollHeight, NOTICE_EDIT_TEXTAREA_MAX_HEIGHT)}px`;
   }, [classDescription]);
 
-  async function handleSubmit() {
-    if (!onSubmit || className.trim().length === 0) {
-      return;
-    }
-
-    await onSubmit({
-      name: className.trim(),
-      description: classDescription.trim(),
-    });
-
-    setClassName("");
-    setClassDescription("");
-    setOpen(false);
-  }
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog>
       <DialogTrigger asChild>
         <Button
           variant={iconOnly ? "ghost" : "default"}
@@ -189,13 +169,7 @@ export function CreateClassDialog({
             정리합니다.
           </DialogDescription>
         </DialogHeader>
-        <form
-          className="grid gap-4 py-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleSubmit();
-          }}
-        >
+        <div className="grid gap-4 py-2">
           <div className="grid gap-2">
             <Label htmlFor="class-name">수업명</Label>
             <Input
@@ -216,18 +190,13 @@ export function CreateClassDialog({
               className="min-h-[140px] max-h-[240px] resize-none overflow-y-auto"
             />
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline" type="button">취소</Button>
-            </DialogClose>
-            <Button
-              type="submit"
-              disabled={className.trim().length === 0 || pending}
-            >
-              {pending ? "생성 중..." : "생성하기"}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">취소</Button>
+          </DialogClose>
+          <Button disabled={className.trim().length === 0}>생성하기</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

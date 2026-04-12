@@ -12,7 +12,6 @@ type TopHeaderProps = {
   profileName: string;
   profileDescriptor: string;
   hideProfileDescriptor?: boolean;
-  showRoleAction?: boolean;
   onOpenMobileNav?: () => void;
   showBrandLogo?: boolean;
   classroomContext?: {
@@ -30,7 +29,6 @@ export function TopHeader({
   profileName,
   profileDescriptor,
   hideProfileDescriptor = false,
-  showRoleAction = true,
   onOpenMobileNav,
   showBrandLogo = true,
   classroomContext,
@@ -102,7 +100,7 @@ export function TopHeader({
         <div className="flex shrink-0 items-center gap-2.5 self-center sm:gap-4">
           {classroomContext ? (
             classroomContext.actions ? <div className="hidden items-center gap-2.5 xl:flex">{classroomContext.actions}</div> : null
-          ) : !showRoleAction ? null : role === "student" ? (
+          ) : role === "student" ? (
             <JoinClassDialog iconOnly />
           ) : (
             <CreateClassDialog iconOnly />
