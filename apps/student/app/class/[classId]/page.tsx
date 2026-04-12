@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 
 import {
   EmptyState,
-  getStudentClassroom,
   GroupChat,
 } from "@modus/classroom-ui";
+import { getStudentClassroomForRoute } from "../../../lib/classes/lookup";
 import { GroupMembersCard } from "./group-members-card";
 
 type StudentClassPageProps = {
@@ -13,7 +13,7 @@ type StudentClassPageProps = {
 
 export default async function StudentClassPage({ params }: StudentClassPageProps) {
   const { classId } = await params;
-  const classroom = getStudentClassroom(classId);
+  const classroom = await getStudentClassroomForRoute(classId);
   if (!classroom) notFound();
 
   return (

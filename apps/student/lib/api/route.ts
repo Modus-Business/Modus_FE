@@ -27,6 +27,11 @@ type AuthHandler<TData> = (context: {
   accessToken: string;
 }) => Promise<ApiServiceResult<TData>>;
 
+type AuthJsonHandler<TBody, TData> = (context: {
+  accessToken: string;
+  body: TBody;
+}) => Promise<ApiServiceResult<TData>>;
+
 type AuthOptions<TData> = {
   successStatus?: number;
   mapData?: (data: TData) => unknown;
@@ -44,6 +49,34 @@ export async function withStudentAuth<TData>(
   }
 
   const result = await handler({ accessToken });
+
+  if (!result.ok) {
+    return NextResponse.json({ message: result.message }, { status: result.status });
+  }
+
+  const responseBody = options.mapData ? options.mapData(result.data) : result.data;
+
+  return NextResponse.json(responseBody, { status: options.successStatus || result.status });
+}
+
+export async function withStudentAuthJson<TBody, TData>(
+  request: Request,
+  handler: AuthJsonHandler<TBody, TData>,
+  options: AuthOptions<TData> = {},
+) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
+  const body = (await request.json().catch(() => null)) as TBody | null;
+
+  if (!accessToken) {
+    return NextResponse.json({ message: "인증 토큰이 필요합니다." }, { status: 401 });
+  }
+
+  if (!body) {
+    return NextResponse.json({ message: "잘못된 요청 본문입니다." }, { status: 400 });
+  }
+
+  const result = await handler({ accessToken, body });
 
   if (!result.ok) {
     return NextResponse.json({ message: result.message }, { status: result.status });

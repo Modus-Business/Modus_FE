@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 
 import "./globals.css";
 import { Providers } from "./providers";
 import { StudentAppShell } from "./student-app-shell";
+import { getStudentClassroomsForApp } from "../lib/classes/lookup";
 
 export const metadata: Metadata = {
   title: {
@@ -26,12 +28,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const studentClassrooms = await getStudentClassroomsForApp();
+
   return (
     <html lang="ko">
       <body>
         <Providers>
-          <StudentAppShell>{children}</StudentAppShell>
+          <StudentAppShell initialStudentClassrooms={studentClassrooms}>{children}</StudentAppShell>
+          <Toaster position="top-center" richColors />
         </Providers>
       </body>
     </html>

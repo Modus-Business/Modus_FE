@@ -69,9 +69,54 @@ function getNoticePreviewLine(content: string, fallbackSummary?: string) {
   return firstContentLine ?? fallbackSummary ?? "";
 }
 
-export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
+export function JoinClassDialog({
+  iconOnly = false,
+  pending = false,
+  onSubmit,
+}: {
+  iconOnly?: boolean;
+  pending?: boolean;
+  onSubmit?: (payload: { classCode: string }) => Promise<void> | void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [classCode, setClassCode] = useState("");
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextClassCode = classCode.trim();
+
+    if (!nextClassCode) {
+      return;
+    }
+
+    try {
+      await onSubmit?.({
+        classCode: nextClassCode,
+      });
+    } catch {
+      return;
+    }
+
+    setClassCode("");
+    setOpen(false);
+  }
+
   return (
-    <Dialog>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (pending) {
+          return;
+        }
+
+        setOpen(nextOpen);
+
+        if (!nextOpen) {
+          setClassCode("");
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           variant={iconOnly ? "ghost" : "default"}
@@ -98,10 +143,16 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
             수업 코드를 입력하기 전에 아래 안내를 먼저 확인해 주세요.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-2">
+        <form className="grid gap-4 py-2" onSubmit={handleSubmit}>
           <div className="grid gap-2">
             <Label htmlFor="join-code">수업 코드</Label>
-            <Input id="join-code" placeholder="예: MODUS7J2Q" />
+            <Input
+              id="join-code"
+              value={classCode}
+              onChange={(event) => setClassCode(event.target.value)}
+              placeholder="예: MODUS7J2Q"
+              autoCapitalize="characters"
+            />
           </div>
           <div className="rounded-[24px] bg-muted px-5 py-4 text-sm leading-8 text-foreground">
             <p className="font-semibold">수업 코드로 로그인하는 방법</p>
@@ -113,13 +164,15 @@ export function JoinClassDialog({ iconOnly = false }: { iconOnly?: boolean }) {
               </li>
             </ul>
           </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">닫기</Button>
-          </DialogClose>
-          <Button>참여하기</Button>
-        </DialogFooter>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" disabled={pending}>닫기</Button>
+            </DialogClose>
+            <Button type="submit" disabled={classCode.trim().length === 0 || pending}>
+              {pending ? "참여 중..." : "참여하기"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

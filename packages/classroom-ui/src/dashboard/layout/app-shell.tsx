@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "../../lib/utils";
-import { getStudentClassroom, getTeacherClassroom, studentProfile, teacherProfile, type UserRole } from "../../lib/mock-data";
+import { getTeacherClassroom, studentProfile, teacherProfile, type StudentClassroom, type UserRole } from "../../lib/mock-data";
 import { NoticesDialog, SubmitAssignmentDialog } from "../dialogs/dialog-triggers";
 import { SidebarNav } from "./sidebar-nav";
 import { TopHeader } from "./top-header";
@@ -13,10 +13,12 @@ import { TopHeader } from "./top-header";
 type AppShellProps = {
   role: UserRole;
   accountName?: string;
+  studentJoinAction?: ReactNode;
+  studentClassroomsOverride?: StudentClassroom[];
   children: ReactNode;
 };
 
-export function AppShell({ role, accountName, children }: AppShellProps) {
+export function AppShell({ role, accountName, studentJoinAction, studentClassroomsOverride, children }: AppShellProps) {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
@@ -24,7 +26,9 @@ export function AppShell({ role, accountName, children }: AppShellProps) {
   const headerDisplayName = accountName || "";
   const studentClassroomMatch = role === "student" ? pathname.match(/^\/class\/([^/]+)$/) : null;
   const teacherClassroomMatch = role === "teacher" ? pathname.match(/^\/class\/([^/]+)(?:\/.*)?$/) : null;
-  const studentClassroom = studentClassroomMatch ? getStudentClassroom(decodeURIComponent(studentClassroomMatch[1])) : undefined;
+  const studentClassroom = studentClassroomMatch
+    ? (studentClassroomsOverride || []).find((classroom) => classroom.id === decodeURIComponent(studentClassroomMatch[1]))
+    : undefined;
   const teacherClassroom = teacherClassroomMatch ? getTeacherClassroom(decodeURIComponent(teacherClassroomMatch[1])) : undefined;
   const studentGroupLabel = studentClassroom?.group?.name.split("·")[0]?.trim();
   const studentGroupNickname = studentClassroom?.group
@@ -126,6 +130,7 @@ export function AppShell({ role, accountName, children }: AppShellProps) {
           role={role}
           profileName={headerDisplayName}
           profileDescriptor={profile.descriptor}
+          studentJoinAction={studentJoinAction}
           hideProfileDescriptor={role === "teacher"}
           showRoleAction={!(role === "teacher" && pathname === "/classes")}
           onOpenMobileNav={() => setMobileNavOpen(true)}
