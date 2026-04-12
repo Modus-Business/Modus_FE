@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { teacherClassesApiClient } from "../lib/classes/client";
 import type {
+  ClassGroupsResponseData,
   ClassesResponseData,
   ClassParticipantsResponseData,
   CreateClassRequest,
@@ -56,5 +57,13 @@ export function useClassParticipantsQuery(classId: string) {
     queryKey: ["teacher-class-participants", classId],
     queryFn: async () =>
       (await teacherClassesApiClient.get<{ participants: ClassParticipantsResponseData }>(`/api/classes/${encodeURIComponent(classId)}/participants`)).data.participants,
+  });
+}
+
+export function useClassGroupsQuery(classId: string) {
+  return useQuery({
+    queryKey: ["teacher-class-groups", classId],
+    queryFn: async () =>
+      (await teacherClassesApiClient.get<{ groups: ClassGroupsResponseData }>(`/api/classes/${encodeURIComponent(classId)}/groups`)).data.groups,
   });
 }

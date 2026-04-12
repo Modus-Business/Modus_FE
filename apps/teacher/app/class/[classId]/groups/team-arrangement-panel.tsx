@@ -5,9 +5,11 @@ import { toast } from "sonner";
 
 import { TeamArrangementBoard, type TeacherClassroom } from "@modus/classroom-ui";
 
-import { useClassParticipantsQuery } from "../../../../hooks/use-create-class";
+import { useClassSubmissionStatusesQuery } from "../../../../hooks/use-assignment-submissions";
+import { useClassGroupsQuery, useClassParticipantsQuery } from "../../../../hooks/use-create-class";
 import { useCreateGroupMutation, useDeleteGroupMutation, useUpdateGroupMutation } from "../../../../hooks/use-create-group";
-import type { ClassParticipantItem } from "../../../../lib/classes/service";
+import type { AssignmentSubmissionStatus } from "../../../../lib/assignments/service";
+import type { ClassGroupSummary, ClassParticipantItem } from "../../../../lib/classes/service";
 
 type TeamArrangementPanelProps = {
   classroom: TeacherClassroom;
@@ -30,10 +32,7 @@ function readErrorMessage(error: unknown) {
   return "모둠 요청에 실패했습니다.";
 }
 
-function buildClassroomFromParticipants(
-  classroom: TeacherClassroom,
-  participants: ClassParticipantItem[],
-): TeacherClassroom {
+function buildTeamsFromParticipants(participants: ClassParticipantItem[]): TeacherClassroom["teams"] {
   const teamsById = new Map<string, TeacherClassroom["teams"][number]>();
 
   for (const participant of participants) {
@@ -60,28 +59,86 @@ function buildClassroomFromParticipants(
     });
   }
 
+  return Array.from(teamsById.values());
+}
+
+function toSubmissionMap(submissions: AssignmentSubmissionStatus[] | undefined) {
+  return new Map((submissions || []).map((submission) => [submission.groupId, submission]));
+}
+
+function getSubmissionLabel(submission: AssignmentSubmissionStatus | undefined) {
+  return submission?.isSubmitted ? "제출 완료" : "제출 미완료";
+}
+
+function applySubmissionStatus(
+  teams: TeacherClassroom["teams"],
+  submissions: Map<string, AssignmentSubmissionStatus>,
+) {
+  return teams.map((team) => ({
+    ...team,
+    submissionStatus: submissions.has(team.id)
+      ? getSubmissionLabel(submissions.get(team.id))
+      : team.submissionStatus,
+  }));
+}
+
+function buildTeamsFromGroups(
+  groups: ClassGroupSummary[],
+  submissions: Map<string, AssignmentSubmissionStatus>,
+): TeacherClassroom["teams"] {
+  return groups.map((group) => ({
+    id: group.groupId,
+    name: group.name,
+    theme: "API",
+    memberIds: group.members.map((member) => member.studentId),
+    submissionStatus: getSubmissionLabel(submissions.get(group.groupId)),
+  }));
+}
+
+function buildRosterFromParticipants(participants: ClassParticipantItem[]): TeacherClassroom["roster"] {
+  return participants.map((participant) => ({
+    id: participant.studentId,
+    nickname: participant.nickname || "",
+    realName: participant.studentName,
+    email: participant.email,
+    status: "online",
+    roleLabel: "수강생",
+  }));
+}
+
+function buildClassroomForBoard(
+  classroom: TeacherClassroom,
+  participants: ClassParticipantItem[] | undefined,
+  groups: ClassGroupSummary[] | undefined,
+  submissions: AssignmentSubmissionStatus[] | undefined,
+): TeacherClassroom {
+  const submissionsByGroupId = toSubmissionMap(submissions);
+  const roster = participants ? buildRosterFromParticipants(participants) : classroom.roster;
+  const participantTeams = participants ? buildTeamsFromParticipants(participants) : classroom.teams;
+  const teams = groups
+    ? buildTeamsFromGroups(groups, submissionsByGroupId)
+    : applySubmissionStatus(participantTeams, submissionsByGroupId);
+
   return {
     ...classroom,
-    roster: participants.map((participant) => ({
-      id: participant.studentId,
-      nickname: participant.nickname || "",
-      realName: participant.studentName,
-      email: participant.email,
-      status: "online",
-      roleLabel: "수강생",
-    })),
-    teams: Array.from(teamsById.values()),
+    roster,
+    teams,
   };
 }
 
 export function TeamArrangementPanel({ classroom }: TeamArrangementPanelProps) {
   const participantsQuery = useClassParticipantsQuery(classroom.id);
+  const classGroupsQuery = useClassGroupsQuery(classroom.id);
+  const submissionsQuery = useClassSubmissionStatusesQuery(classroom.id);
   const createGroupMutation = useCreateGroupMutation();
   const updateGroupMutation = useUpdateGroupMutation();
   const deleteGroupMutation = useDeleteGroupMutation(classroom.id);
-  const boardClassroom = participantsQuery.data
-    ? buildClassroomFromParticipants(classroom, participantsQuery.data.participants)
-    : classroom;
+  const boardClassroom = buildClassroomForBoard(
+    classroom,
+    participantsQuery.data?.participants,
+    classGroupsQuery.data?.groups,
+    submissionsQuery.data?.submissions,
+  );
 
   return (
     <TeamArrangementBoard

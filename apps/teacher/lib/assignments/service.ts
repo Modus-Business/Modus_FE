@@ -1,0 +1,113 @@
+import "server-only";
+
+import axios from "axios";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASEURL || "";
+
+type BackendEnvelope<T> = {
+  success?: boolean;
+  statusCode?: number;
+  data?: T;
+  message?: string | string[];
+  error?: string;
+  timestamp?: string;
+  path?: string;
+};
+
+type AssignmentsServiceFailure = {
+  ok: false;
+  status: number;
+  message: string;
+};
+
+type AssignmentsServiceSuccess<T> = {
+  ok: true;
+  status: number;
+  data: T;
+};
+
+export type AssignmentSubmissionStatus = {
+  groupId: string;
+  groupName: string;
+  isSubmitted: boolean;
+  submissionId: string | null;
+  fileUrl: string | null;
+  link: string | null;
+  submittedAt: string | null;
+};
+
+export type AssignmentSubmissionStatusListResponseData = {
+  submissions: AssignmentSubmissionStatus[];
+};
+
+const teacherAssignmentsClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  validateStatus: () => true,
+});
+
+function getErrorMessage(payload: unknown, fallback: string) {
+  if (!payload || typeof payload !== "object") {
+    return fallback;
+  }
+
+  const message = (payload as { message?: unknown }).message;
+
+  if (Array.isArray(message)) {
+    const normalized = message.filter((entry): entry is string => typeof entry === "string");
+    return normalized[0] || fallback;
+  }
+
+  if (typeof message === "string" && message.trim()) {
+    return message;
+  }
+
+  return fallback;
+}
+
+export async function getClassSubmissionStatuses(
+  accessToken: string,
+  classId: string,
+): Promise<AssignmentsServiceSuccess<AssignmentSubmissionStatusListResponseData> | AssignmentsServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await teacherAssignmentsClient.get<BackendEnvelope<AssignmentSubmissionStatusListResponseData>>(
+      `/assignments/submissions/class/${encodeURIComponent(classId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300 || !payload?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "제출 현황을 불러오지 못했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "제출 현황 서버에 연결하지 못했습니다.",
+    };
+  }
+}

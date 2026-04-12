@@ -21,16 +21,77 @@ import {
 } from "@modus/classroom-ui";
 
 import { useGroupDetailQuery } from "../../../hooks/use-group-detail";
+import { useClassGroupsQuery } from "../../../hooks/use-create-class";
+import { useClassSubmissionStatusesQuery } from "../../../hooks/use-assignment-submissions";
 import type { TeacherClassroom } from "@modus/classroom-ui";
+import type { AssignmentSubmissionStatus } from "../../../lib/assignments/service";
+import type { ClassGroupSummary } from "../../../lib/classes/service";
 
 type GroupStatusSectionProps = {
   classId: string;
   teams: TeacherClassroom["teams"];
 };
 
+function getSubmissionLabel(submission: AssignmentSubmissionStatus | undefined, fallback: string) {
+  if (!submission) {
+    return fallback || "제출 미완료";
+  }
+
+  return submission.isSubmitted ? "제출 완료" : "제출 미완료";
+}
+
+function formatSubmittedAt(value: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}. ${month}. ${day}. ${hour}:${minute}`;
+}
+
+function toSubmissionMap(submissions: AssignmentSubmissionStatus[] | undefined) {
+  return new Map((submissions || []).map((submission) => [submission.groupId, submission]));
+}
+
+function toStatusTeams(
+  groups: ClassGroupSummary[],
+  submissions: Map<string, AssignmentSubmissionStatus>,
+): TeacherClassroom["teams"] {
+  return groups.map((group) => ({
+    id: group.groupId,
+    name: group.name,
+    theme: "API",
+    memberIds: group.members.map((member) => member.studentId),
+    submissionStatus: getSubmissionLabel(submissions.get(group.groupId), "제출 미완료"),
+  }));
+}
+
 export function GroupStatusSection({ classId, teams }: GroupStatusSectionProps) {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const selectedTeam = teams.find((team) => team.id === selectedGroupId) || null;
+  const classGroupsQuery = useClassGroupsQuery(classId);
+  const submissionsQuery = useClassSubmissionStatusesQuery(classId);
+  const submissionsByGroupId = toSubmissionMap(submissionsQuery.data?.submissions);
+  const displayTeams = classGroupsQuery.data
+    ? toStatusTeams(classGroupsQuery.data.groups, submissionsByGroupId)
+    : teams.map((team) => ({
+      ...team,
+      submissionStatus: getSubmissionLabel(submissionsByGroupId.get(team.id), team.submissionStatus),
+    }));
+  const selectedTeam = displayTeams.find((team) => team.id === selectedGroupId) || null;
+  const selectedSubmission = selectedGroupId ? submissionsByGroupId.get(selectedGroupId) : undefined;
+  const selectedSubmissionStatus = getSubmissionLabel(selectedSubmission, selectedTeam?.submissionStatus || "제출 미완료");
+  const selectedSubmittedAt = formatSubmittedAt(selectedSubmission?.submittedAt || null);
   const groupDetailQuery = useGroupDetailQuery(selectedGroupId);
 
   return (
@@ -45,9 +106,9 @@ export function GroupStatusSection({ classId, teams }: GroupStatusSectionProps) 
         </Button>
       </CardHeader>
       <CardContent>
-        {teams.length > 0 ? (
+        {displayTeams.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {teams.map((team) => (
+            {displayTeams.map((team) => (
               <button
                 key={team.id}
                 type="button"
@@ -98,10 +159,39 @@ export function GroupStatusSection({ classId, teams }: GroupStatusSectionProps) 
           {groupDetailQuery.data ? (
             <div className="space-y-4">
               <div className="rounded-3xl border border-border/70 bg-background/70 p-4">
-                <p className="text-sm font-semibold text-foreground">{groupDetailQuery.data.name}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  구성원 {groupDetailQuery.data.memberCount}명
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{groupDetailQuery.data.name}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      구성원 {groupDetailQuery.data.memberCount}명
+                    </p>
+                  </div>
+                  <Badge variant={selectedSubmissionStatus === "제출 완료" ? "success" : "warning"}>{selectedSubmissionStatus}</Badge>
+                </div>
+                <div className="mt-4 rounded-2xl border border-border/70 bg-white px-4 py-3">
+                  <p className="text-xs font-semibold text-muted-foreground">제출 정보</p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {selectedSubmittedAt ? `제출 시간 ${selectedSubmittedAt}` : "아직 제출된 과제가 없습니다."}
+                  </p>
+                  {selectedSubmission?.fileUrl || selectedSubmission?.link ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {selectedSubmission.fileUrl ? (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={selectedSubmission.fileUrl} target="_blank" rel="noreferrer">
+                            파일 확인
+                          </a>
+                        </Button>
+                      ) : null}
+                      {selectedSubmission.link ? (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={selectedSubmission.link} target="_blank" rel="noreferrer">
+                            링크 확인
+                          </a>
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               <div className="space-y-2">
