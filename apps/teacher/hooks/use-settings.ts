@@ -9,9 +9,9 @@ type MeSettingsPayload = {
   settings: MeSettingsResponseData;
 };
 
-export function useTeacherSettingsQuery() {
+export function useTeacherMeQuery() {
   return useQuery({
-    queryKey: ["teacher-settings"],
+    queryKey: ["teacher-me"],
     queryFn: async () =>
       (await teacherMeApiClient.get<MeSettingsPayload>("/api/me/settings")).data.settings,
   });

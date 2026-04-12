@@ -12,15 +12,16 @@ import { TopHeader } from "./top-header";
 
 type AppShellProps = {
   role: UserRole;
+  accountName?: string;
   children: ReactNode;
 };
 
-export function AppShell({ role, children }: AppShellProps) {
+export function AppShell({ role, accountName, children }: AppShellProps) {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const profile = role === "student" ? studentProfile : teacherProfile;
-  const headerDisplayName = profile.realName;
+  const headerDisplayName = accountName || "";
   const studentClassroomMatch = role === "student" ? pathname.match(/^\/class\/([^/]+)$/) : null;
   const teacherClassroomMatch = role === "teacher" ? pathname.match(/^\/class\/([^/]+)(?:\/.*)?$/) : null;
   const studentClassroom = studentClassroomMatch ? getStudentClassroom(decodeURIComponent(studentClassroomMatch[1])) : undefined;

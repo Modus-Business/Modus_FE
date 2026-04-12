@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-import { AppShell } from "@modus/classroom-ui";
 import "./globals.css";
 import { Providers } from "./providers";
+import { StudentAppShell } from "./student-app-shell";
 
 export const metadata: Metadata = {
   title: {
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="ko">
       <body>
         <Providers>
-          <AppShell role="student">{children}</AppShell>
+          <StudentAppShell>{children}</StudentAppShell>
         </Providers>
       </body>
     </html>

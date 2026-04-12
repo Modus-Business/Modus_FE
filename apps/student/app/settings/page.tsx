@@ -4,10 +4,10 @@ import { BellRing, UserRound } from "lucide-react";
 
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, PageHeader, studentProfile } from "@modus/classroom-ui";
 
-import { useStudentSettingsQuery } from "../../hooks/use-settings";
+import { useStudentMeQuery } from "../../hooks/use-settings";
 
 export default function StudentSettingsPage() {
-  const settingsQuery = useStudentSettingsQuery();
+  const settingsQuery = useStudentMeQuery();
   const settings = settingsQuery.data;
   const isRoleMismatch = settings ? settings.role !== "student" : false;
   const displayName = settings?.name || studentProfile.realName;

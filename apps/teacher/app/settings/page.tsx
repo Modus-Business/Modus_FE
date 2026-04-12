@@ -4,10 +4,10 @@ import { BellRing, UserRound } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, PageHeader, teacherProfile } from "@modus/classroom-ui";
 
-import { useTeacherSettingsQuery } from "../../hooks/use-settings";
+import { useTeacherMeQuery } from "../../hooks/use-settings";
 
 export default function TeacherSettingsPage() {
-  const settingsQuery = useTeacherSettingsQuery();
+  const settingsQuery = useTeacherMeQuery();
   const settings = settingsQuery.data;
   const isRoleMismatch = settings ? settings.role !== "teacher" : false;
   const displayName = settings?.name || teacherProfile.realName;

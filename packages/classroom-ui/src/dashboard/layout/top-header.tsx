@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ChevronRight, Menu } from "lucide-react";
 
 import type { UserRole } from "../../lib/mock-data";
@@ -35,6 +37,7 @@ export function TopHeader({
   showBrandLogo = true,
   classroomContext,
 }: TopHeaderProps) {
+  const [mounted, setMounted] = useState(false);
   const effectiveProfileName = classroomContext?.profileName ?? profileName;
   const effectiveProfileDescriptor = classroomContext?.profileDescriptor ?? profileDescriptor;
   const compactDescriptor = effectiveProfileDescriptor.split("·")[0]?.trim() ?? effectiveProfileDescriptor;
@@ -53,6 +56,10 @@ export function TopHeader({
   const profileDescriptorClassName = classroomContext
     ? "truncate text-xs text-muted-foreground transition-colors duration-150 group-hover:text-foreground/70"
     : "truncate text-sm text-muted-foreground transition-colors duration-150 group-hover:text-foreground/70";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/70 bg-white/92 backdrop-blur">
@@ -118,7 +125,9 @@ export function TopHeader({
             ) : null}
             {!useNicknameLabel ? (
               <div className="hidden min-w-0 md:block">
-                <p className={profileNameClassName}>{effectiveProfileName}</p>
+                <p className={profileNameClassName} suppressHydrationWarning>
+                  {mounted ? effectiveProfileName : ""}
+                </p>
                 {showProfileDescriptor ? (
                   <p className={profileDescriptorClassName}>{compactDescriptor}</p>
                 ) : null}
