@@ -26,6 +26,13 @@ type AssignmentsServiceSuccess<T> = {
   data: T;
 };
 
+type SubmissionFileResponseData = {
+  body: ArrayBuffer;
+  contentDisposition: string;
+  contentLength: string;
+  contentType: string;
+};
+
 export type AssignmentSubmissionStatus = {
   groupId: string;
   groupName: string;
@@ -45,6 +52,11 @@ const teacherAssignmentsClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  validateStatus: () => true,
+});
+
+const teacherSubmissionFileClient = axios.create({
+  responseType: "arraybuffer",
   validateStatus: () => true,
 });
 
@@ -108,6 +120,51 @@ export async function getClassSubmissionStatuses(
       ok: false,
       status: 502,
       message: "제출 현황 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function fetchSubmissionFile(
+  accessToken: string,
+  submissionId: string,
+): Promise<AssignmentsServiceSuccess<SubmissionFileResponseData> | AssignmentsServiceFailure> {
+  try {
+    const response = await teacherSubmissionFileClient.get<ArrayBuffer>(
+      `/assignments/submissions/${encodeURIComponent(submissionId)}/download`,
+      {
+        baseURL: API_BASE_URL,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const contentType = typeof response.headers["content-type"] === "string" ? response.headers["content-type"] : "";
+    const contentDisposition = typeof response.headers["content-disposition"] === "string" ? response.headers["content-disposition"] : "";
+    const contentLength = typeof response.headers["content-length"] === "string" ? response.headers["content-length"] : "";
+
+    if (response.status < 200 || response.status >= 300 || !response.data) {
+      return {
+        ok: false,
+        status: response.status >= 400 ? response.status : 502,
+        message: "제출 파일을 불러오지 못했습니다.",
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: {
+        body: response.data,
+        contentType,
+        contentDisposition,
+        contentLength,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "제출 파일 서버에 연결하지 못했습니다.",
     };
   }
 }

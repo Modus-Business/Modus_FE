@@ -28,7 +28,7 @@ export default async function TeacherClassPage({ params }: TeacherClassPageProps
       />
 
       <section className="bg-background/60 p-3 sm:p-5 lg:p-6">
-        <GroupStatusSection classId={classId} teams={classroom.teams} />
+        <GroupStatusSection classId={classId} className={classroom.name} teams={classroom.teams} />
         </section>
     </div>
   );

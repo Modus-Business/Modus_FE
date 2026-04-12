@@ -29,6 +29,7 @@ import type { ClassGroupSummary } from "../../../lib/classes/service";
 
 type GroupStatusSectionProps = {
   classId: string;
+  className: string;
   teams: TeacherClassroom["teams"];
 };
 
@@ -77,7 +78,18 @@ function toStatusTeams(
   }));
 }
 
-export function GroupStatusSection({ classId, teams }: GroupStatusSectionProps) {
+function buildSubmissionFileProxyUrl(
+  submissionId: string,
+  className: string,
+  groupName: string,
+) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("className", className);
+  searchParams.set("groupName", groupName);
+  return `/api/assignments/submissions/${encodeURIComponent(submissionId)}/download?${searchParams.toString()}`;
+}
+
+export function GroupStatusSection({ classId, className, teams }: GroupStatusSectionProps) {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const classGroupsQuery = useClassGroupsQuery(classId);
   const submissionsQuery = useClassSubmissionStatusesQuery(classId);
@@ -92,6 +104,13 @@ export function GroupStatusSection({ classId, teams }: GroupStatusSectionProps) 
   const selectedSubmission = selectedGroupId ? submissionsByGroupId.get(selectedGroupId) : undefined;
   const selectedSubmissionStatus = getSubmissionLabel(selectedSubmission, selectedTeam?.submissionStatus || "제출 미완료");
   const selectedSubmittedAt = formatSubmittedAt(selectedSubmission?.submittedAt || null);
+  const selectedFileProxyUrl = selectedSubmission?.submissionId
+    ? buildSubmissionFileProxyUrl(
+      selectedSubmission.submissionId,
+      className,
+      selectedTeam?.name || "모둠",
+    )
+    : "";
   const groupDetailQuery = useGroupDetailQuery(selectedGroupId);
 
   return (
@@ -175,10 +194,10 @@ export function GroupStatusSection({ classId, teams }: GroupStatusSectionProps) 
                   </p>
                   {selectedSubmission?.fileUrl || selectedSubmission?.link ? (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {selectedSubmission.fileUrl ? (
+                      {selectedFileProxyUrl ? (
                         <Button asChild variant="outline" size="sm">
-                          <a href={selectedSubmission.fileUrl} target="_blank" rel="noreferrer">
-                            파일 확인
+                          <a href={selectedFileProxyUrl} target="_blank" rel="noreferrer">
+                            파일 다운로드
                           </a>
                         </Button>
                       ) : null}
