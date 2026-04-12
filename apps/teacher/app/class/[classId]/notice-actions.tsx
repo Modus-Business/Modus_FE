@@ -5,7 +5,12 @@ import { toast } from "sonner";
 
 import { NewNoticeDialog, NoticesDialog, type NoticeItem } from "@modus/classroom-ui";
 
-import { useClassNoticesQuery, useCreateNoticeMutation } from "../../../hooks/use-create-notice";
+import {
+  useClassNoticesQuery,
+  useCreateNoticeMutation,
+  useDeleteNoticeMutation,
+  useUpdateNoticeMutation,
+} from "../../../hooks/use-create-notice";
 import type { NoticeItemResponseData } from "../../../lib/notices/service";
 
 type NoticeActionsProps = {
@@ -41,6 +46,8 @@ function formatNoticeDate(value: string) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 }
 
@@ -57,6 +64,8 @@ function toNoticeItem(notice: NoticeItemResponseData): NoticeItem {
 export function NoticeActions({ classId, initialNotices }: NoticeActionsProps) {
   const noticesQuery = useClassNoticesQuery(classId);
   const createNoticeMutation = useCreateNoticeMutation();
+  const updateNoticeMutation = useUpdateNoticeMutation(classId);
+  const deleteNoticeMutation = useDeleteNoticeMutation(classId);
   const notices = noticesQuery.data ? noticesQuery.data.notices.map(toNoticeItem) : initialNotices;
 
   return (
@@ -65,6 +74,32 @@ export function NoticeActions({ classId, initialNotices }: NoticeActionsProps) {
         notices={notices}
         detailTitlePrefix="공지"
         allowManage
+        updatePending={updateNoticeMutation.isPending}
+        deletePending={deleteNoticeMutation.isPending}
+        onUpdate={async (payload) => {
+          try {
+            await updateNoticeMutation.mutateAsync({
+              noticeId: payload.id,
+              body: {
+                title: payload.title,
+                content: payload.content,
+              },
+            });
+            toast.success("공지사항이 수정되었습니다.");
+          } catch (error) {
+            toast.error(readErrorMessage(error));
+            throw error;
+          }
+        }}
+        onDelete={async (noticeId) => {
+          try {
+            await deleteNoticeMutation.mutateAsync(noticeId);
+            toast.success("공지사항이 삭제되었습니다.");
+          } catch (error) {
+            toast.error(readErrorMessage(error));
+            throw error;
+          }
+        }}
       />
       <NewNoticeDialog
         pending={createNoticeMutation.isPending}

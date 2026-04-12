@@ -238,11 +238,19 @@ export function NoticesDialog({
   triggerProps,
   detailTitlePrefix,
   allowManage = false,
+  updatePending = false,
+  deletePending = false,
+  onUpdate,
+  onDelete,
 }: {
   notices: NoticeItem[];
   triggerProps?: TriggerButtonProps;
   detailTitlePrefix?: string;
   allowManage?: boolean;
+  updatePending?: boolean;
+  deletePending?: boolean;
+  onUpdate?: (payload: { id: string; title: string; content: string }) => Promise<void> | void;
+  onDelete?: (id: string) => Promise<void> | void;
 }) {
   const [open, setOpen] = useState(false);
   const [noticeItems, setNoticeItems] = useState(notices);
@@ -292,9 +300,24 @@ export function NoticesDialog({
     resetDraft();
   }
 
-  function saveNotice() {
+  async function saveNotice() {
     if (!selectedNotice) {
       return;
+    }
+
+    const nextTitle = draftTitle.trim();
+    const nextContent = draftContent.trim();
+
+    if (onUpdate) {
+      try {
+        await onUpdate({
+          id: selectedNotice.id,
+          title: nextTitle,
+          content: nextContent,
+        });
+      } catch {
+        return;
+      }
     }
 
     setNoticeItems((currentNotices) =>
@@ -302,9 +325,9 @@ export function NoticesDialog({
         notice.id === selectedNotice.id
           ? {
               ...notice,
-              title: draftTitle.trim(),
-              summary: getNoticePreviewLine(draftContent, notice.summary),
-              content: draftContent.trim(),
+              title: nextTitle,
+              summary: getNoticePreviewLine(nextContent, notice.summary),
+              content: nextContent,
             }
           : notice,
       ),
@@ -312,9 +335,17 @@ export function NoticesDialog({
     closeEditMode();
   }
 
-  function deleteNotice() {
+  async function deleteNotice() {
     if (!selectedNotice) {
       return;
+    }
+
+    if (onDelete) {
+      try {
+        await onDelete(selectedNotice.id);
+      } catch {
+        return;
+      }
     }
 
     setNoticeItems((currentNotices) =>
@@ -396,10 +427,11 @@ export function NoticesDialog({
                   onClick={saveNotice}
                   disabled={
                     draftTitle.trim().length === 0 ||
-                    draftContent.trim().length === 0
+                    draftContent.trim().length === 0 ||
+                    updatePending
                   }
                 >
-                  저장하기
+                  {updatePending ? "저장 중..." : "저장하기"}
                 </Button>
               </DialogFooter>
             </>
@@ -484,8 +516,8 @@ export function NoticesDialog({
                     >
                       취소
                     </Button>
-                    <Button variant="destructive" onClick={deleteNotice}>
-                      삭제하기
+                    <Button variant="destructive" disabled={deletePending} onClick={deleteNotice}>
+                      {deletePending ? "삭제 중..." : "삭제하기"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

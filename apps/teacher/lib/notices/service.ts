@@ -32,6 +32,11 @@ export type CreateNoticeRequest = {
   classId: string;
 };
 
+export type UpdateNoticeRequest = {
+  title: string;
+  content: string;
+};
+
 export type NoticeItemResponseData = {
   noticeId: string;
   classId: string;
@@ -42,6 +47,10 @@ export type NoticeItemResponseData = {
 
 export type NoticeListResponseData = {
   notices: NoticeItemResponseData[];
+};
+
+export type DeleteNoticeResponseData = {
+  message: string;
 };
 
 const teacherNoticesClient = axios.create({
@@ -158,6 +167,98 @@ export async function getNoticesByClass(
       ok: false,
       status: 502,
       message: "공지 목록 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function updateNotice(
+  accessToken: string,
+  noticeId: string,
+  body: UpdateNoticeRequest,
+): Promise<NoticesServiceSuccess<NoticeItemResponseData> | NoticesServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await teacherNoticesClient.patch<BackendEnvelope<NoticeItemResponseData>>(
+      `/notices/${encodeURIComponent(noticeId)}`,
+      body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300 || !payload?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "공지 수정에 실패했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "공지 수정 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function deleteNotice(
+  accessToken: string,
+  noticeId: string,
+): Promise<NoticesServiceSuccess<DeleteNoticeResponseData> | NoticesServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await teacherNoticesClient.delete<BackendEnvelope<DeleteNoticeResponseData>>(
+      `/notices/${encodeURIComponent(noticeId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300 || !payload?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "공지 삭제에 실패했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "공지 삭제 서버에 연결하지 못했습니다.",
     };
   }
 }
