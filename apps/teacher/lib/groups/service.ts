@@ -40,6 +40,20 @@ export type GroupDetailResponseData = {
   members: GroupDetailMember[];
 };
 
+export type CreateGroupRequest = {
+  classId: string;
+  name: string;
+  studentIds?: string[];
+};
+
+export type CreateGroupResponseData = {
+  groupId: string;
+  classId: string;
+  name: string;
+  memberCount: number;
+  createdAt: string;
+};
+
 const teacherGroupsClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -108,6 +122,52 @@ export async function getGroupDetail(
       ok: false,
       status: 502,
       message: "모둠 조회 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function createGroup(
+  accessToken: string,
+  body: CreateGroupRequest,
+): Promise<GroupsServiceSuccess<CreateGroupResponseData> | GroupsServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await teacherGroupsClient.post<BackendEnvelope<CreateGroupResponseData>>(
+      "/groups",
+      body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300 || !payload?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "모둠 생성에 실패했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "모둠 생성 서버에 연결하지 못했습니다.",
     };
   }
 }

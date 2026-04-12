@@ -48,6 +48,28 @@ export type ClassesResponseData = {
   classes: ClassSummary[];
 };
 
+export type ClassParticipantGroup = {
+  groupId: string | null;
+  name: string | null;
+};
+
+export type ClassParticipantItem = {
+  classParticipantId: string;
+  studentId: string;
+  studentName: string;
+  email: string;
+  nickname: string | null;
+  group: ClassParticipantGroup | null;
+  joinedAt: string;
+  groupJoinedAt: string | null;
+};
+
+export type ClassParticipantsResponseData = {
+  classId: string;
+  className: string;
+  participants: ClassParticipantItem[];
+};
+
 export type CreateClassResponseData = {
   classId: string;
   name: string;
@@ -222,6 +244,51 @@ export async function regenerateClassCode(
       ok: false,
       status: 502,
       message: "수업 코드 재발급 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function getClassParticipants(
+  accessToken: string,
+  classId: string,
+): Promise<ClassesServiceSuccess<ClassParticipantsResponseData> | ClassesServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await teacherClassesClient.get<BackendEnvelope<ClassParticipantsResponseData>>(
+      `/classes/${encodeURIComponent(classId)}/participants`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300 || !payload?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "수업 참가 학생 목록을 불러오지 못했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "수업 참가 학생 서버에 연결하지 못했습니다.",
     };
   }
 }

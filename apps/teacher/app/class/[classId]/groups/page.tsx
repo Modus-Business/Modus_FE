@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Button, PageHeader, TeamArrangementBoard, teacherProfile } from "@modus/classroom-ui";
+import { Button, PageHeader, teacherProfile } from "@modus/classroom-ui";
 import { getTeacherClassroomForRoute } from "../../../../lib/classes/lookup";
+import { TeamArrangementPanel } from "./team-arrangement-panel";
 
 type TeacherGroupArrangementPageProps = {
   params: Promise<{ classId: string }>;
@@ -29,7 +30,7 @@ export default async function TeacherGroupArrangementPage({ params }: TeacherGro
         className="border-b-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       />
       <section className="bg-background/60 p-3 sm:p-5 lg:p-6">
-        <TeamArrangementBoard classroom={classroom} />
+        <TeamArrangementPanel classroom={classroom} />
       </section>
     </div>
   );

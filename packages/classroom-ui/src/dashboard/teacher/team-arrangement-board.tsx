@@ -14,6 +14,16 @@ import { Label } from "../../ui/label";
 
 type TeamArrangementBoardProps = {
   classroom: TeacherClassroom;
+  createGroupPending?: boolean;
+  onCreateGroup?: (payload: { name: string }) => Promise<{
+    id: string;
+    name: string;
+    memberCount: number;
+  }> | {
+    id: string;
+    name: string;
+    memberCount: number;
+  };
 };
 
 type ArrangementTeam = TeacherClassroom["teams"][number];
@@ -24,7 +34,7 @@ type TeamNameDialogState =
 
 const normalizeTeamName = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 
-export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
+export function TeamArrangementBoard({ classroom, createGroupPending = false, onCreateGroup }: TeamArrangementBoardProps) {
   const [teams, setTeams] = useState<ArrangementTeam[]>(() => classroom.teams.map((team) => ({ ...team, memberIds: [...team.memberIds] })));
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null);
   const [draggingStudentId, setDraggingStudentId] = useState<string | null>(null);
@@ -81,12 +91,12 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
     setActiveDropZone(null);
   };
 
-  const createGroup = (teamName: string) => {
+  const createGroup = (teamName: string, createdGroup?: { id: string; name: string; memberCount: number }) => {
     setTeams((currentTeams) => [
       ...currentTeams,
       {
-        id: `temp-group-${Date.now()}-${currentTeams.length + 1}`,
-        name: teamName,
+        id: createdGroup?.id || `temp-group-${Date.now()}-${currentTeams.length + 1}`,
+        name: createdGroup?.name || teamName,
         theme: "새 모둠",
         memberIds: [],
         submissionStatus: "제출 미완료",
@@ -141,12 +151,21 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
     setTeamNameDialog({ mode: "rename", teamId: team.id });
   };
 
-  const submitTeamName = () => {
+  const submitTeamName = async () => {
     const nextName = teamNameDraft.trim();
     if (!nextName || !teamNameDialog || hasDuplicateTeamName) return;
 
     if (teamNameDialog.mode === "create") {
-      createGroup(nextName);
+      if (onCreateGroup) {
+        try {
+          const createdGroup = await onCreateGroup({ name: nextName });
+          createGroup(nextName, createdGroup);
+        } catch {
+          return;
+        }
+      } else {
+        createGroup(nextName);
+      }
     } else {
       renameGroup(teamNameDialog.teamId, nextName);
     }
@@ -193,8 +212,8 @@ export function TeamArrangementBoard({ classroom }: TeamArrangementBoardProps) {
             <DialogClose asChild>
               <Button variant="outline">취소</Button>
             </DialogClose>
-            <Button onClick={submitTeamName} disabled={nextTeamName.length === 0 || hasDuplicateTeamName}>
-              {teamNameDialog?.mode === "rename" ? "이름 변경" : "생성하기"}
+            <Button onClick={submitTeamName} disabled={nextTeamName.length === 0 || hasDuplicateTeamName || createGroupPending}>
+              {teamNameDialog?.mode === "rename" ? "이름 변경" : createGroupPending ? "생성 중..." : "생성하기"}
             </Button>
           </DialogFooter>
         </DialogContent>
