@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ArrowUpRight, ChevronLeft, GraduationCap, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   Badge,
@@ -18,11 +19,24 @@ import {
   DialogTitle,
   DialogTrigger,
   Input,
+  PasswordVisibilityButton,
   cn,
 } from "@modus/classroom-ui";
 
-type AuthMode = "login" | "signup";
-type SignupRole = "student" | "teacher";
+import {
+  formatExpiresAt,
+  getDestinationForRole,
+  getMissingDestinationMessage,
+  readErrorMessage,
+  validateLogin,
+  validateSignupEmail,
+  validateSignupProfile,
+  type AuthMode,
+  type LoginField,
+  type SignupField,
+} from "../../../lib/auth/contracts";
+import { useLoginMutation, useSendSignupVerificationMutation, useSignupMutation } from "../../../hooks/use-auth";
+import { useAuthStore } from "../../../store/auth-store";
 
 type AuthScreenProps = {
   initialMode?: AuthMode;
@@ -31,20 +45,46 @@ type AuthScreenProps = {
 const layerClassName =
   "flex h-full min-h-full w-full items-center justify-center overflow-hidden p-3 sm:p-4 lg:absolute lg:inset-0 lg:grid lg:grid-cols-[1.04fr_0.96fr] lg:gap-5 lg:p-0 xl:gap-6";
 
+function FieldError({ message }: { message?: string }) {
+  if (!message) {
+    return null;
+  }
+
+  return <p className="mt-2 text-sm leading-5 text-rose-600">{message}</p>;
+}
+
 export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
-  const [mode, setMode] = React.useState<AuthMode>(initialMode);
-  const [signupRole, setSignupRole] = React.useState<SignupRole | null>(null);
-  const [signupStep, setSignupStep] = React.useState<"role" | "profile" | "verify">("role");
+  const {
+    mode,
+    signupRole,
+    signupStep,
+    showVerificationInput,
+    verificationRequested,
+    verificationExpiresAt,
+    loginForm,
+    signupForm,
+    loginFieldErrors,
+    signupFieldErrors,
+    openSignup,
+    openLogin,
+    resetSignupFlow,
+    selectSignupRole,
+    setMode,
+    setLoginField,
+    setSignupField,
+    setLoginFieldErrors,
+    setSignupFieldErrors,
+    markVerificationRequested,
+    prepareLoginAfterSignup,
+  } = useAuthStore();
 
-  const openSignup = React.useCallback(() => {
-    setMode("signup");
-    setSignupRole(null);
-    setSignupStep("role");
-  }, []);
+  const loginMutation = useLoginMutation();
+  const signupMutation = useSignupMutation();
+  const sendVerificationMutation = useSendSignupVerificationMutation();
 
-  const openLogin = React.useCallback(() => {
-    setMode("login");
-  }, []);
+  React.useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode, setMode]);
 
   React.useEffect(() => {
     const syncModeFromHash = () => {
@@ -57,7 +97,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
     return () => {
       window.removeEventListener("hashchange", syncModeFromHash);
     };
-  }, []);
+  }, [setMode]);
 
   React.useEffect(() => {
     const targetUrl = mode === "signup" ? "/auth#signup" : "/auth";
@@ -69,39 +109,144 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
     window.history.replaceState(null, "", targetUrl);
   }, [mode]);
 
+  const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const errors = validateLogin(loginForm);
+    setLoginFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    try {
+      const payload = await loginMutation.mutateAsync(loginForm);
+
+      if (!payload?.authenticated || !payload.user) {
+        toast.error("로그인 응답을 확인하지 못했습니다.");
+        return;
+      }
+
+      const destination = getDestinationForRole(payload.user.role);
+
+      if (!destination) {
+        toast.error(getMissingDestinationMessage(payload.user.role));
+        return;
+      }
+
+      window.location.assign(destination);
+    } catch (error) {
+      toast.error(readErrorMessage(error, "로그인 요청 중 문제가 발생했습니다."));
+    }
+  };
+
+  const handleSendVerification = async () => {
+    const errors = validateSignupEmail(signupForm.email);
+
+    setSignupFieldErrors({
+      ...signupFieldErrors,
+      email: errors.email,
+      verificationCode: undefined,
+    });
+
+    if (errors.email) {
+      return;
+    }
+
+    try {
+      const payload = await sendVerificationMutation.mutateAsync({
+        email: signupForm.email.trim(),
+      });
+
+      markVerificationRequested(payload.expiresAt);
+      toast.success(payload.message);
+    } catch (error) {
+      toast.error(readErrorMessage(error, "인증번호 발송 중 문제가 발생했습니다."));
+    }
+  };
+
+  const handleSignupSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!signupRole) {
+      toast.error("역할을 먼저 선택하세요.");
+      resetSignupFlow();
+      return;
+    }
+
+    const errors = validateSignupProfile(signupForm);
+
+    if (!verificationRequested) {
+      errors.verificationCode = "이메일 인증을 먼저 진행하세요.";
+    } else if (!signupForm.verificationCode.trim()) {
+      errors.verificationCode = "인증번호를 입력하세요.";
+    }
+
+    setSignupFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    try {
+      await signupMutation.mutateAsync({
+        ...signupForm,
+        role: signupRole,
+        name: signupForm.name.trim(),
+        email: signupForm.email.trim(),
+        verificationCode: signupForm.verificationCode.trim(),
+      });
+
+      prepareLoginAfterSignup(signupForm.email.trim());
+      toast.success("회원가입이 완료되었습니다. 로그인하세요.");
+    } catch (error) {
+      toast.error(readErrorMessage(error, "회원가입 요청 중 문제가 발생했습니다."));
+    }
+  };
+
   return (
     <div className="relative h-full min-h-full overflow-hidden rounded-[28px] bg-[#eef3fb] sm:rounded-[32px]">
       <div
         aria-hidden={mode !== "login"}
         className={cn(
           layerClassName,
-          mode === "login" ? "relative z-20 h-full min-h-full opacity-100" : "pointer-events-none absolute inset-0 z-10 opacity-0"
+          mode === "login" ? "relative z-20 h-full min-h-full opacity-100" : "pointer-events-none absolute inset-0 z-10 opacity-0",
         )}
       >
         <LoginVisual active={mode === "login"} />
-        <LoginCard active={mode === "login"} onSwitchToSignup={openSignup} />
+        <LoginCard
+          active={mode === "login"}
+          fieldErrors={loginFieldErrors}
+          form={loginForm}
+          pending={loginMutation.isPending}
+          onChange={setLoginField}
+          onSubmit={handleLoginSubmit}
+          onSwitchToSignup={openSignup}
+        />
       </div>
 
       <div
         aria-hidden={mode !== "signup"}
         className={cn(
           layerClassName,
-          mode === "signup" ? "relative z-20 h-full min-h-full opacity-100" : "pointer-events-none absolute inset-0 z-10 opacity-0"
+          mode === "signup" ? "relative z-20 h-full min-h-full opacity-100" : "pointer-events-none absolute inset-0 z-10 opacity-0",
         )}
       >
         <SignupCard
           active={mode === "signup"}
+          expiresAt={verificationExpiresAt}
+          fieldErrors={signupFieldErrors}
+          form={signupForm}
+          pending={signupMutation.isPending}
           role={signupRole}
           step={signupStep}
-          onBackToRoleSelect={() => {
-            setSignupRole(null);
-            setSignupStep("role");
-          }}
-          onProceedToVerify={() => setSignupStep("verify")}
-          onSelectRole={(role) => {
-            setSignupRole(role);
-            setSignupStep("profile");
-          }}
+          showVerificationInput={showVerificationInput}
+          sendVerificationPending={sendVerificationMutation.isPending}
+          onBackToRoleSelect={resetSignupFlow}
+          onChange={setSignupField}
+          onSendVerification={handleSendVerification}
+          onSelectRole={selectSignupRole}
+          onSubmitSignup={handleSignupSubmit}
           onSwitchToLogin={openLogin}
         />
         <SignupVisual active={mode === "signup"} />
@@ -116,14 +261,14 @@ function LoginVisual({ active }: { active: boolean }) {
       <div
         className={cn(
           "absolute left-1/2 top-[58%] h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_68%_45%,#82a8ff_0%,#5b84ff_48%,#3f63d6_100%)] shadow-[0_20px_80px_rgba(91,132,255,0.28)] will-change-transform transition-transform duration-[1200ms] ease-[cubic-bezier(0.19,1,0.22,1)] sm:h-[38rem] sm:w-[38rem] lg:-left-[50%] lg:top-1/2 lg:h-[860px] lg:w-[860px] lg:-translate-x-0 xl:-left-[46%] xl:h-[920px] xl:w-[920px]",
-          active ? "translate-x-0 scale-100" : "translate-x-[12%] scale-[1.02]"
+          active ? "translate-x-0 scale-100" : "translate-x-[12%] scale-[1.02]",
         )}
       />
       <div className="relative flex h-full items-end justify-center px-5 py-6 sm:px-7 sm:py-7 lg:items-center lg:justify-start lg:px-14 xl:px-20">
         <div
           className={cn(
             "max-w-md text-center text-white will-change-transform transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.19,1,0.22,1)] lg:text-left",
-            active ? "translate-x-0 opacity-100 delay-100" : "-translate-x-16 opacity-0"
+            active ? "translate-x-0 opacity-100 delay-100" : "-translate-x-16 opacity-0",
           )}
         >
           <div className="inline-flex items-center">
@@ -146,14 +291,14 @@ function SignupVisual({ active }: { active: boolean }) {
       <div
         className={cn(
           "absolute left-1/2 top-[44%] h-[32rem] w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_32%_45%,#82a8ff_0%,#5b84ff_48%,#3f63d6_100%)] shadow-[0_20px_80px_rgba(91,132,255,0.28)] will-change-transform transition-transform duration-[1200ms] ease-[cubic-bezier(0.19,1,0.22,1)] sm:h-[40rem] sm:w-[40rem] lg:-right-[50%] lg:left-auto lg:top-1/2 lg:h-[860px] lg:w-[860px] lg:-translate-x-0 xl:-right-[46%] xl:h-[920px] xl:w-[920px]",
-          active ? "translate-x-0 scale-100" : "-translate-x-[12%] scale-[1.02]"
+          active ? "translate-x-0 scale-100" : "-translate-x-[12%] scale-[1.02]",
         )}
       />
       <div className="relative flex h-full items-end justify-center px-5 py-6 sm:px-7 sm:py-8 lg:items-center lg:justify-end lg:px-14 xl:px-20">
         <div
           className={cn(
             "max-w-md text-center text-white will-change-transform transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.19,1,0.22,1)] lg:text-right",
-            active ? "translate-x-0 opacity-100 delay-100" : "translate-x-16 opacity-0"
+            active ? "translate-x-0 opacity-100 delay-100" : "translate-x-16 opacity-0",
           )}
         >
           <div className="flex justify-center lg:justify-end">
@@ -176,13 +321,31 @@ function SignupVisual({ active }: { active: boolean }) {
   );
 }
 
-function LoginCard({ active, onSwitchToSignup }: { active: boolean; onSwitchToSignup: () => void }) {
+function LoginCard({
+  active,
+  fieldErrors,
+  form,
+  pending,
+  onChange,
+  onSubmit,
+  onSwitchToSignup,
+}: {
+  active: boolean;
+  fieldErrors: Partial<Record<LoginField, string>>;
+  form: { email: string; password: string };
+  pending: boolean;
+  onChange: (field: LoginField, value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSwitchToSignup: () => void;
+}) {
+  const [passwordVisible, setPasswordVisible] = React.useState(false);
+
   return (
     <section className="order-1 flex min-h-fit w-full items-center justify-center px-1 py-4 sm:px-2 sm:py-5 lg:order-2 lg:h-full lg:rounded-[34px] lg:bg-white lg:px-8 lg:py-6">
       <div
         className={cn(
           "w-full max-w-[34rem] space-y-7 will-change-transform transition-[opacity,transform] duration-[820ms] ease-[cubic-bezier(0.19,1,0.22,1)] sm:space-y-8 lg:space-y-0",
-          active ? "translate-x-0 scale-100 opacity-100 delay-75" : "-translate-x-10 scale-[0.97] opacity-0"
+          active ? "translate-x-0 scale-100 opacity-100 delay-75" : "-translate-x-10 scale-[0.97] opacity-0",
         )}
       >
         <div className="space-y-3 px-2 text-center lg:hidden">
@@ -206,41 +369,60 @@ function LoginCard({ active, onSwitchToSignup }: { active: boolean; onSwitchToSi
               </Badge>
             </div>
 
-            <form className="space-y-3.5 sm:space-y-4">
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="이메일을 입력하세요"
-                  autoComplete="email"
-                  className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[58px] sm:rounded-[18px] sm:pl-12 sm:text-base"
-                />
+            <form className="space-y-3.5 sm:space-y-4" onSubmit={onSubmit}>
+              <div>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    placeholder="이메일을 입력하세요"
+                    autoComplete="email"
+                    onChange={(event) => onChange("email", event.target.value)}
+                    className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[58px] sm:rounded-[18px] sm:pl-12 sm:text-base"
+                  />
+                </div>
+                <FieldError message={fieldErrors.email} />
               </div>
 
-              <div className="relative">
-                <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="비밀번호를 입력하세요"
-                  autoComplete="current-password"
-                  className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[58px] sm:rounded-[18px] sm:pl-12 sm:text-base"
-                />
+              <div>
+                <div className="relative">
+                  <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                  <Input
+                    id="password"
+                    type={passwordVisible ? "text" : "password"}
+                    value={form.password}
+                    placeholder="비밀번호를 입력하세요"
+                    autoComplete="current-password"
+                    onChange={(event) => onChange("password", event.target.value)}
+                    className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pr-13 pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[58px] sm:rounded-[18px] sm:pr-14 sm:pl-12 sm:text-base"
+                  />
+                  <PasswordVisibilityButton
+                    visible={passwordVisible}
+                    onToggle={() => setPasswordVisible((current) => !current)}
+                  />
+                </div>
+                <FieldError message={fieldErrors.password} />
               </div>
 
-              <Button type="submit" size="lg" className="h-12 w-full rounded-[15px] text-base shadow-[0_16px_34px_rgba(91,132,255,0.22)] sm:h-[54px] sm:rounded-[16px] sm:text-[1.02rem]">
-                Sign in
+              <Button
+                type="submit"
+                size="lg"
+                disabled={pending}
+                className="h-12 w-full rounded-[15px] text-base shadow-[0_16px_34px_rgba(91,132,255,0.22)] sm:h-[54px] sm:rounded-[16px] sm:text-[1.02rem]"
+              >
+                {pending ? "로그인 중..." : "Sign in"}
               </Button>
             </form>
 
             <p className="mt-4 text-center text-sm leading-6 text-foreground">
-                계정이 없으신가요?{" "}
-                <button type="button" onClick={onSwitchToSignup} className="font-semibold text-foreground transition-colors hover:text-primary">
-                  회원가입하기
-                </button>
-                <ArrowUpRight className="ml-1 inline size-4" />
-              </p>
+              계정이 없으신가요?{" "}
+              <button type="button" onClick={onSwitchToSignup} className="font-semibold text-foreground transition-colors hover:text-primary">
+                회원가입하기
+              </button>
+              <ArrowUpRight className="ml-1 inline size-4" />
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -250,25 +432,50 @@ function LoginCard({ active, onSwitchToSignup }: { active: boolean; onSwitchToSi
 
 function SignupCard({
   active,
+  expiresAt,
+  fieldErrors,
+  form,
+  pending,
   role,
   step,
+  showVerificationInput,
+  sendVerificationPending,
   onBackToRoleSelect,
-  onProceedToVerify,
+  onChange,
+  onSendVerification,
   onSelectRole,
+  onSubmitSignup,
   onSwitchToLogin,
 }: {
   active: boolean;
-  role: SignupRole | null;
-  step: "role" | "profile" | "verify";
+  expiresAt: string | null;
+  fieldErrors: Partial<Record<SignupField, string>>;
+  form: {
+    name: string;
+    email: string;
+    password: string;
+    passwordConfirmation: string;
+    verificationCode: string;
+  };
+  pending: boolean;
+  role: "student" | "teacher" | null;
+  step: "role" | "profile";
+  showVerificationInput: boolean;
+  sendVerificationPending: boolean;
   onBackToRoleSelect: () => void;
-  onProceedToVerify: () => void;
-  onSelectRole: (role: SignupRole) => void;
+  onChange: (field: SignupField, value: string) => void;
+  onSendVerification: () => Promise<void>;
+  onSelectRole: (role: "student" | "teacher") => void;
+  onSubmitSignup: (event: React.FormEvent<HTMLFormElement>) => void;
   onSwitchToLogin: () => void;
 }) {
   const [resetDialogOpen, setResetDialogOpen] = React.useState(false);
+  const [passwordVisible, setPasswordVisible] = React.useState(false);
+  const [passwordConfirmationVisible, setPasswordConfirmationVisible] = React.useState(false);
+  const formattedExpiresAt = formatExpiresAt(expiresAt);
 
   React.useEffect(() => {
-    if (step !== "verify") {
+    if (step !== "profile") {
       setResetDialogOpen(false);
     }
   }, [step]);
@@ -278,7 +485,7 @@ function SignupCard({
       <div
         className={cn(
           "w-full max-w-[35rem] space-y-7 will-change-transform transition-[opacity,transform] duration-[820ms] ease-[cubic-bezier(0.19,1,0.22,1)] sm:space-y-8 lg:space-y-0",
-          active ? "translate-x-0 scale-100 opacity-100 delay-75" : "translate-x-10 scale-[0.97] opacity-0"
+          active ? "translate-x-0 scale-100 opacity-100 delay-75" : "translate-x-10 scale-[0.97] opacity-0",
         )}
       >
         <div className="space-y-3 px-2 text-center lg:hidden">
@@ -302,160 +509,202 @@ function SignupCard({
               </Badge>
             </div>
 
-          {step === "role" ? (
-            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-              <button
-                type="button"
-                onClick={() => onSelectRole("student")}
-                className="rounded-[22px] border border-border/80 bg-white px-4 py-5 text-center transition-transform duration-300 hover:-translate-y-1 hover:border-primary/25 sm:rounded-[26px] sm:px-6 sm:py-7"
-              >
-                <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#eef4ff] text-primary sm:size-24 lg:size-28">
-                  <GraduationCap className="size-9 sm:size-10 lg:size-12" />
-                </div>
-                <p className="mt-5 text-xl font-semibold tracking-tight text-foreground sm:mt-6 sm:text-2xl">수강생</p>
-                <p className="mt-2.5 text-sm leading-6 text-muted-foreground sm:mt-3">
-                  수업에 참여하고 모둠 활동을 진행할 계정을 만듭니다.
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onSelectRole("teacher")}
-                className="rounded-[22px] border border-border/80 bg-white px-4 py-5 text-center transition-transform duration-300 hover:-translate-y-1 hover:border-primary/25 sm:rounded-[26px] sm:px-6 sm:py-7"
-              >
-                <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#eef4ff] text-primary sm:size-24 lg:size-28">
-                  <ShieldCheck className="size-9 sm:size-10 lg:size-12" />
-                </div>
-                <p className="mt-5 text-xl font-semibold tracking-tight text-foreground sm:mt-6 sm:text-2xl">교강사</p>
-                <p className="mt-2.5 text-sm leading-6 text-muted-foreground sm:mt-3">
-                  수업을 개설하고 운영할 교강사 계정을 만듭니다.
-                </p>
-              </button>
-            </div>
-          ) : null}
-
-          {step === "profile" ? (
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2 rounded-[18px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                <div>
-                  <p className="text-base font-semibold text-foreground sm:text-lg">{role === "student" ? "수강생 계정" : "교강사 계정"}</p>
-                </div>
+            {step === "role" ? (
+              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 <button
                   type="button"
-                  onClick={onBackToRoleSelect}
-                  className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  onClick={() => onSelectRole("student")}
+                  className="rounded-[22px] border border-border/80 bg-white px-4 py-5 text-center transition-transform duration-300 hover:-translate-y-1 hover:border-primary/25 sm:rounded-[26px] sm:px-6 sm:py-7"
                 >
-                  <ChevronLeft className="size-4" />
-                  역할 변경
+                  <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#eef4ff] text-primary sm:size-24 lg:size-28">
+                    <GraduationCap className="size-9 sm:size-10 lg:size-12" />
+                  </div>
+                  <p className="mt-5 text-xl font-semibold tracking-tight text-foreground sm:mt-6 sm:text-2xl">수강생</p>
+                  <p className="mt-2.5 text-sm leading-6 text-muted-foreground sm:mt-3">
+                    수업에 참여하고 모둠 활동을 진행할 계정을 만듭니다.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectRole("teacher")}
+                  className="rounded-[22px] border border-border/80 bg-white px-4 py-5 text-center transition-transform duration-300 hover:-translate-y-1 hover:border-primary/25 sm:rounded-[26px] sm:px-6 sm:py-7"
+                >
+                  <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#eef4ff] text-primary sm:size-24 lg:size-28">
+                    <ShieldCheck className="size-9 sm:size-10 lg:size-12" />
+                  </div>
+                  <p className="mt-5 text-xl font-semibold tracking-tight text-foreground sm:mt-6 sm:text-2xl">교강사</p>
+                  <p className="mt-2.5 text-sm leading-6 text-muted-foreground sm:mt-3">
+                    수업을 개설하고 운영할 교강사 계정을 만듭니다.
+                  </p>
                 </button>
               </div>
+            ) : null}
 
-              <form
-                className="space-y-3.5 sm:space-y-4"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  onProceedToVerify();
-                }}
-              >
-                <div className="relative">
-                  <UserRound className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                  <Input
-                    id="name"
-                    placeholder="본명을 입력하세요"
-                    autoComplete="name"
-                    className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
-                  />
+            {step === "profile" ? (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-2 rounded-[18px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                  <div>
+                    <p className="text-base font-semibold text-foreground sm:text-lg">{role === "student" ? "수강생 계정" : "교강사 계정"}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onBackToRoleSelect}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    <ChevronLeft className="size-4" />
+                    역할 변경
+                  </button>
                 </div>
 
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="이메일을 입력하세요"
-                    autoComplete="email"
-                    className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
-                  />
-                </div>
+                <form className="space-y-3.5 sm:space-y-4" onSubmit={onSubmitSignup}>
+                  <div>
+                    <div className="relative">
+                      <UserRound className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                      <Input
+                        id="name"
+                        value={form.name}
+                        placeholder="본명을 입력하세요"
+                        autoComplete="name"
+                        onChange={(event) => onChange("name", event.target.value)}
+                        className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
+                      />
+                    </div>
+                    <FieldError message={fieldErrors.name} />
+                  </div>
 
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="비밀번호를 입력하세요"
-                  autoComplete="new-password"
-                  className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:text-base"
-                />
-
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="비밀번호를 다시 입력하세요"
-                  autoComplete="new-password"
-                  className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:text-base"
-                />
-
-                <Button type="submit" size="lg" className="h-12 w-full rounded-[15px] text-base shadow-[0_16px_34px_rgba(91,132,255,0.22)] sm:h-[52px] sm:rounded-[16px] sm:text-[1.02rem]">
-                  이메일 인증으로 계속
-                </Button>
-              </form>
-            </div>
-          ) : null}
-
-          {step === "verify" ? (
-            <div className="space-y-4">
-              <div className="rounded-[20px] border border-primary/14 bg-[#f8faff] px-4 py-4">
-                <p className="text-sm font-semibold text-foreground">이메일 인증</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  입력한 이메일로 인증번호를 보냈습니다. 인증이 완료되면 회원가입을 진행할 수 있습니다.
-                </p>
-              </div>
-
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                <Input
-                  id="verification-code"
-                  inputMode="numeric"
-                  placeholder="인증번호를 입력하세요"
-                  className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
-                />
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button type="button" variant="outline" className="h-12 rounded-[15px] sm:h-[52px] sm:rounded-[16px]">
-                      처음부터 다시
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>회원가입을 처음부터 다시 시작할까요?</DialogTitle>
-                      <DialogDescription>
-                        지금까지 입력한 역할과 회원가입 정보가 모두 초기화됩니다. 계속하려면 다시 입력해야 합니다.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="outline">계속 작성</Button>
-                      </DialogClose>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <div className="relative flex-1">
+                        <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          value={form.email}
+                          placeholder="이메일을 입력하세요"
+                          autoComplete="email"
+                          onChange={(event) => onChange("email", event.target.value)}
+                          className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 pr-4 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
+                        />
+                      </div>
                       <Button
                         type="button"
-                        onClick={() => {
-                          setResetDialogOpen(false);
-                          onBackToRoleSelect();
-                        }}
+                        size="sm"
+                        variant="outline"
+                        disabled={sendVerificationPending}
+                        onClick={onSendVerification}
+                        className="mt-1 h-[44px] rounded-[14px] border-primary/15 bg-[#f8faff] px-4 text-sm font-semibold text-primary hover:bg-primary/5 sm:h-[48px] sm:rounded-[16px]"
                       >
-                        처음부터 다시
+                        {sendVerificationPending ? "전송 중" : showVerificationInput ? "재인증" : "인증"}
                       </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                <Button type="button" size="lg" className="h-12 rounded-[15px] text-base shadow-[0_16px_34px_rgba(91,132,255,0.22)] sm:h-[52px] sm:rounded-[16px] sm:text-[1.02rem]">
-                  회원가입
-                </Button>
+                    </div>
+                    <FieldError message={fieldErrors.email} />
+
+                    {showVerificationInput ? (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                          <Input
+                            id="verification-code"
+                            value={form.verificationCode}
+                            placeholder="인증번호를 입력하세요"
+                            autoComplete="one-time-code"
+                            onChange={(event) => onChange("verificationCode", event.target.value)}
+                            className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
+                          />
+                        </div>
+                        <p className="text-xs leading-5 text-muted-foreground">
+                          이메일로 받은 인증코드를 입력해 주세요.
+                          {formattedExpiresAt ? ` 인증 유효시간: ${formattedExpiresAt}` : ""}
+                        </p>
+                        <FieldError message={fieldErrors.verificationCode} />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <div className="relative">
+                      <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                      <Input
+                        id="signup-password"
+                        type={passwordVisible ? "text" : "password"}
+                        value={form.password}
+                        placeholder="비밀번호를 입력하세요"
+                        autoComplete="new-password"
+                        onChange={(event) => onChange("password", event.target.value)}
+                        className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pr-13 pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pr-14 sm:pl-12 sm:text-base"
+                      />
+                      <PasswordVisibilityButton
+                        visible={passwordVisible}
+                        onToggle={() => setPasswordVisible((current) => !current)}
+                      />
+                    </div>
+                    <FieldError message={fieldErrors.password} />
+                  </div>
+
+                  <div>
+                    <div className="relative">
+                      <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                      <Input
+                        id="confirm-password"
+                        type={passwordConfirmationVisible ? "text" : "password"}
+                        value={form.passwordConfirmation}
+                        placeholder="비밀번호를 다시 입력하세요"
+                        autoComplete="new-password"
+                        onChange={(event) => onChange("passwordConfirmation", event.target.value)}
+                        className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pr-13 pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pr-14 sm:pl-12 sm:text-base"
+                      />
+                      <PasswordVisibilityButton
+                        visible={passwordConfirmationVisible}
+                        onToggle={() => setPasswordConfirmationVisible((current) => !current)}
+                      />
+                    </div>
+                    <FieldError message={fieldErrors.passwordConfirmation} />
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button type="button" variant="outline" className="h-12 rounded-[15px] sm:h-[52px] sm:rounded-[16px]">
+                          처음부터 다시
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>회원가입을 처음부터 다시 시작할까요?</DialogTitle>
+                          <DialogDescription>
+                            지금까지 입력한 역할과 회원가입 정보가 모두 초기화됩니다. 계속하려면 다시 입력해야 합니다.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button variant="outline">계속 작성</Button>
+                          </DialogClose>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setResetDialogOpen(false);
+                              onBackToRoleSelect();
+                            }}
+                          >
+                            처음부터 다시
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={pending}
+                      className="h-12 rounded-[15px] text-base shadow-[0_16px_34px_rgba(91,132,255,0.22)] sm:h-[52px] sm:rounded-[16px] sm:text-[1.02rem]"
+                    >
+                      {pending ? "가입 중..." : "회원가입"}
+                    </Button>
+                  </div>
+                </form>
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
             <p className="mt-4 text-center text-sm leading-6 text-foreground">
               이미 계정이 있나요?{" "}

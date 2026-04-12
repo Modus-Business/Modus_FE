@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { BookMarked, Layers3, LogOut, Menu, Settings } from "lucide-react";
 
 import { Button } from "../../ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog";
 import { cn } from "../../lib/utils";
 
 type DashboardRole = "student" | "teacher";
@@ -37,6 +47,29 @@ export function SidebarNav({
 }: SidebarNavProps) {
   const pathname = usePathname();
   const items = navConfig[role];
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [logoutPending, setLogoutPending] = useState(false);
+
+  async function handleLogout() {
+    if (logoutPending) {
+      return;
+    }
+
+    setLogoutPending(true);
+
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      const webBaseUrl = process.env.NEXT_PUBLIC_WEB ? process.env.NEXT_PUBLIC_WEB.replace(/\/$/, "") : "";
+      window.location.assign(webBaseUrl || "/");
+    }
+  }
+
+  function requestLogout() {
+    setLogoutDialogOpen(true);
+  }
 
   return (
     <aside
@@ -91,21 +124,45 @@ export function SidebarNav({
         {!collapsed ? (
           <Button
             variant="outline"
+            disabled={logoutPending}
+            onClick={requestLogout}
             className="h-11 w-full justify-start rounded-2xl hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:h-12"
           >
             <LogOut className="size-4" />
-            로그아웃
+            {logoutPending ? "로그아웃 중..." : "로그아웃"}
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="icon"
+            disabled={logoutPending}
+            onClick={requestLogout}
             className="size-12 rounded-[20px] text-sidebar-foreground hover:bg-red-50 hover:text-red-600 sm:size-14"
           >
             <LogOut className="size-5" />
           </Button>
         )}
       </div>
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent className="sm:w-[min(92vw,28rem)]">
+          <DialogHeader>
+            <DialogTitle>로그아웃할까요?</DialogTitle>
+            <DialogDescription>
+              현재 계정의 로그인 상태가 해제되고 시작 화면으로 이동합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" disabled={logoutPending}>
+                취소
+              </Button>
+            </DialogClose>
+            <Button type="button" disabled={logoutPending} onClick={handleLogout}>
+              {logoutPending ? "로그아웃 중..." : "로그아웃"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }
