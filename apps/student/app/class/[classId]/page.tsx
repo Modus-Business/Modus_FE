@@ -2,10 +2,11 @@ import { notFound } from "next/navigation";
 
 import {
   EmptyState,
-  GroupChat,
+  type GroupSummary,
 } from "@modus/classroom-ui";
 import { getStudentClassroomForRoute } from "../../../lib/classes/lookup";
 import { GroupMembersCard } from "./group-members-card";
+import { StudentGroupChatPanelShell } from "./student-group-chat-panel-shell";
 
 type StudentClassPageProps = {
   params: Promise<{ classId: string }>;
@@ -27,8 +28,11 @@ export default async function StudentClassPage({ params }: StudentClassPageProps
         </div>
       ) : (
         <section className="grid min-h-0 flex-1 gap-3 bg-background/40 p-3 sm:gap-4 sm:p-4 lg:p-5 xl:grid-cols-[minmax(0,1fr)_minmax(236px,264px)] xl:items-stretch xl:p-6">
-          <div className="min-h-0 min-w-0">
-            <GroupChat group={classroom.group} showHeader={false} className="h-full min-h-0" />
+          <div className="min-h-0 min-w-0 xl:h-[calc(100dvh-11rem)]">
+            <StudentGroupChatPanelShell
+              group={classroom.group as GroupSummary}
+              className="h-full min-h-0"
+            />
           </div>
 
           <div className="space-y-4 xl:sticky xl:top-24 xl:h-fit xl:self-start xl:justify-self-end">
