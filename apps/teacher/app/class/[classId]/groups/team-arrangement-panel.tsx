@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { TeamArrangementBoard, type TeacherClassroom } from "@modus/classroom-ui";
 
 import { useClassParticipantsQuery } from "../../../../hooks/use-create-class";
-import { useCreateGroupMutation } from "../../../../hooks/use-create-group";
+import { useCreateGroupMutation, useUpdateGroupMutation } from "../../../../hooks/use-create-group";
 import type { ClassParticipantItem } from "../../../../lib/classes/service";
 
 type TeamArrangementPanelProps = {
@@ -23,11 +23,11 @@ function readErrorMessage(error: unknown) {
 
     if (Array.isArray(message)) {
       const firstMessage = message.find((entry): entry is string => typeof entry === "string");
-      return firstMessage || "모둠 생성에 실패했습니다.";
+      return firstMessage || "모둠 요청에 실패했습니다.";
     }
   }
 
-  return "모둠 생성에 실패했습니다.";
+  return "모둠 요청에 실패했습니다.";
 }
 
 function buildClassroomFromParticipants(
@@ -64,7 +64,7 @@ function buildClassroomFromParticipants(
     ...classroom,
     roster: participants.map((participant) => ({
       id: participant.studentId,
-      nickname: participant.nickname || participant.studentName,
+      nickname: participant.nickname || "",
       realName: participant.studentName,
       email: participant.email,
       status: "online",
@@ -77,6 +77,7 @@ function buildClassroomFromParticipants(
 export function TeamArrangementPanel({ classroom }: TeamArrangementPanelProps) {
   const participantsQuery = useClassParticipantsQuery(classroom.id);
   const createGroupMutation = useCreateGroupMutation();
+  const updateGroupMutation = useUpdateGroupMutation();
   const boardClassroom = participantsQuery.data
     ? buildClassroomFromParticipants(classroom, participantsQuery.data.participants)
     : classroom;
@@ -85,6 +86,7 @@ export function TeamArrangementPanel({ classroom }: TeamArrangementPanelProps) {
     <TeamArrangementBoard
       classroom={boardClassroom}
       createGroupPending={createGroupMutation.isPending}
+      updateGroupPending={updateGroupMutation.isPending}
       onCreateGroup={async ({ name }) => {
         try {
           const response = await createGroupMutation.mutateAsync({
@@ -97,6 +99,21 @@ export function TeamArrangementPanel({ classroom }: TeamArrangementPanelProps) {
             name: response.group.name,
             memberCount: response.group.memberCount,
           };
+        } catch (error) {
+          toast.error(readErrorMessage(error));
+          throw error;
+        }
+      }}
+      onUpdateGroup={async ({ groupId, name, studentIds }) => {
+        try {
+          await updateGroupMutation.mutateAsync({
+            groupId,
+            body: {
+              name,
+              studentIds,
+            },
+          });
+          toast.success("모둠이 수정되었습니다.");
         } catch (error) {
           toast.error(readErrorMessage(error));
           throw error;

@@ -54,6 +54,11 @@ export type CreateGroupResponseData = {
   createdAt: string;
 };
 
+export type UpdateGroupRequest = {
+  name: string;
+  studentIds?: string[];
+};
+
 const teacherGroupsClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -168,6 +173,53 @@ export async function createGroup(
       ok: false,
       status: 502,
       message: "모둠 생성 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function updateGroup(
+  accessToken: string,
+  groupId: string,
+  body: UpdateGroupRequest,
+): Promise<GroupsServiceSuccess<CreateGroupResponseData> | GroupsServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await teacherGroupsClient.patch<BackendEnvelope<CreateGroupResponseData>>(
+      `/groups/${encodeURIComponent(groupId)}`,
+      body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300 || !payload?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "모둠 수정에 실패했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "모둠 수정 서버에 연결하지 못했습니다.",
     };
   }
 }

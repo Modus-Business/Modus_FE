@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, GripVertical, PencilLine, Plus, Trash2, UsersRound } from "lucide-react";
 
 import type { TeacherClassroom } from "../../lib/mock-data";
@@ -15,6 +15,7 @@ import { Label } from "../../ui/label";
 type TeamArrangementBoardProps = {
   classroom: TeacherClassroom;
   createGroupPending?: boolean;
+  updateGroupPending?: boolean;
   onCreateGroup?: (payload: { name: string }) => Promise<{
     id: string;
     name: string;
@@ -24,24 +25,78 @@ type TeamArrangementBoardProps = {
     name: string;
     memberCount: number;
   };
+  onUpdateGroup?: (payload: {
+    groupId: string;
+    name: string;
+    studentIds: string[];
+  }) => Promise<void> | void;
 };
 
 type ArrangementTeam = TeacherClassroom["teams"][number];
+type ArrangementStudent = TeacherClassroom["roster"][number];
 type TeamNameDialogState =
   | { mode: "create" }
   | { mode: "rename"; teamId: string }
   | null;
 
 const normalizeTeamName = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+const StudentDisplayName = ({ student, className }: { student: ArrangementStudent; className?: string }) => {
+  const nickname = student.nickname.trim();
 
-export function TeamArrangementBoard({ classroom, createGroupPending = false, onCreateGroup }: TeamArrangementBoardProps) {
-  const [teams, setTeams] = useState<ArrangementTeam[]>(() => classroom.teams.map((team) => ({ ...team, memberIds: [...team.memberIds] })));
+  return (
+    <span className={cn("truncate", className)}>
+      <span>{student.realName}</span>
+      <span className="mx-1.5 text-muted-foreground/45">|</span>
+      <span>{nickname || "-"}</span>
+    </span>
+  );
+};
+
+const cloneTeams = (teams: ArrangementTeam[]) => teams.map((team) => ({ ...team, memberIds: [...team.memberIds] }));
+
+const buildTeamsAfterStudentMove = (
+  teams: ArrangementTeam[],
+  studentId: string,
+  targetTeamId?: string,
+) => {
+  const nextTeams = teams.map((team) => ({
+    ...team,
+    memberIds: team.memberIds.filter((memberId) => memberId !== studentId),
+  }));
+
+  if (!targetTeamId) {
+    return nextTeams;
+  }
+
+  return nextTeams.map((team) =>
+    team.id === targetTeamId
+      ? { ...team, memberIds: [...team.memberIds, studentId] }
+      : team,
+  );
+};
+
+export function TeamArrangementBoard({
+  classroom,
+  createGroupPending = false,
+  updateGroupPending = false,
+  onCreateGroup,
+  onUpdateGroup,
+}: TeamArrangementBoardProps) {
+  const [teams, setTeams] = useState<ArrangementTeam[]>(() => cloneTeams(classroom.teams));
   const [activeDropZone, setActiveDropZone] = useState<string | null>(null);
   const [draggingStudentId, setDraggingStudentId] = useState<string | null>(null);
   const [pendingDeleteTeamId, setPendingDeleteTeamId] = useState<string | null>(null);
   const [teamNameDialog, setTeamNameDialog] = useState<TeamNameDialogState>(null);
   const [teamNameDraft, setTeamNameDraft] = useState("");
   const [openStudentPickerId, setOpenStudentPickerId] = useState<string | null>(null);
+  const classroomTeamsSignature = useMemo(
+    () => JSON.stringify(classroom.teams.map((team) => [team.id, team.name, team.memberIds])),
+    [classroom.teams],
+  );
+
+  useEffect(() => {
+    setTeams(cloneTeams(classroom.teams));
+  }, [classroom.id, classroomTeamsSignature]);
 
   const rosterById = useMemo(
     () => new Map(classroom.roster.map((student) => [student.id, student])),
@@ -53,26 +108,55 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
   );
   const unassignedStudents = classroom.roster.filter((student) => !assignedIds.has(student.id));
 
-  const moveStudent = (studentId: string, targetTeamId?: string) => {
-    setTeams((currentTeams) => {
-      const nextTeams = currentTeams.map((team) => ({
-        ...team,
-        memberIds: team.memberIds.filter((memberId) => memberId !== studentId),
-      }));
-
-      if (!targetTeamId) {
-        return nextTeams;
-      }
-
-      return nextTeams.map((team) =>
-        team.id === targetTeamId
-          ? { ...team, memberIds: [...team.memberIds, studentId] }
-          : team,
-      );
-    });
+  const clearStudentMoveState = (studentId: string) => {
     setActiveDropZone(null);
     setDraggingStudentId(null);
     setOpenStudentPickerId((current) => (current === studentId ? null : current));
+  };
+
+  const moveStudent = async (studentId: string, targetTeamId?: string) => {
+    if (updateGroupPending) {
+      clearStudentMoveState(studentId);
+      return;
+    }
+
+    const sourceTeam = teams.find((team) => team.memberIds.includes(studentId)) || null;
+    const targetTeam = targetTeamId ? teams.find((team) => team.id === targetTeamId) || null : null;
+
+    if (targetTeamId && !targetTeam) {
+      return;
+    }
+
+    if ((!sourceTeam && !targetTeam) || (sourceTeam && targetTeam && sourceTeam.id === targetTeam.id)) {
+      clearStudentMoveState(studentId);
+      return;
+    }
+
+    const nextTeams = buildTeamsAfterStudentMove(teams, studentId, targetTeamId);
+
+    if (onUpdateGroup) {
+      const changedTeam = targetTeam || sourceTeam;
+      const nextChangedTeam = changedTeam
+        ? nextTeams.find((team) => team.id === changedTeam.id) || null
+        : null;
+
+      if (!changedTeam || !nextChangedTeam) {
+        return;
+      }
+
+      try {
+        await onUpdateGroup({
+          groupId: changedTeam.id,
+          name: changedTeam.name,
+          studentIds: nextChangedTeam.memberIds,
+        });
+      } catch {
+        return;
+      }
+    }
+
+    setTeams(nextTeams);
+    clearStudentMoveState(studentId);
   };
 
   const handleStudentDragStart = (
@@ -167,6 +251,24 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
         createGroup(nextName);
       }
     } else {
+      const team = teams.find((currentTeam) => currentTeam.id === teamNameDialog.teamId) || null;
+
+      if (!team) {
+        return;
+      }
+
+      if (onUpdateGroup) {
+        try {
+          await onUpdateGroup({
+            groupId: team.id,
+            name: nextName,
+            studentIds: team.memberIds,
+          });
+        } catch {
+          return;
+        }
+      }
+
       renameGroup(teamNameDialog.teamId, nextName);
     }
 
@@ -212,8 +314,13 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
             <DialogClose asChild>
               <Button variant="outline">취소</Button>
             </DialogClose>
-            <Button onClick={submitTeamName} disabled={nextTeamName.length === 0 || hasDuplicateTeamName || createGroupPending}>
-              {teamNameDialog?.mode === "rename" ? "이름 변경" : createGroupPending ? "생성 중..." : "생성하기"}
+            <Button
+              onClick={() => void submitTeamName()}
+              disabled={nextTeamName.length === 0 || hasDuplicateTeamName || createGroupPending || updateGroupPending}
+            >
+              {teamNameDialog?.mode === "rename"
+                ? updateGroupPending ? "저장 중..." : "이름 변경"
+                : createGroupPending ? "생성 중..." : "생성하기"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -278,7 +385,7 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
               event.preventDefault();
               const studentId = event.dataTransfer.getData("text/student-id");
               if (studentId) {
-                moveStudent(studentId);
+                void moveStudent(studentId);
               }
             }}
           >
@@ -303,7 +410,9 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
                     <div className="flex min-w-0 items-center gap-3">
                       <GripVertical className="size-4 text-muted-foreground" />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          <StudentDisplayName student={student} />
+                        </p>
                       </div>
                     </div>
                     <span className="group relative inline-flex shrink-0 cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary">
@@ -338,7 +447,7 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
                   event.preventDefault();
                   const studentId = event.dataTransfer.getData("text/student-id");
                   if (studentId) {
-                    moveStudent(studentId, team.id);
+                    void moveStudent(studentId, team.id);
                   }
                 }}
               >
@@ -390,7 +499,9 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
                           <div className="flex min-w-0 items-center gap-3">
                             <GripVertical className="size-4 text-muted-foreground" />
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-foreground">{student.realName}</p>
+                              <p className="truncate text-sm font-semibold text-foreground">
+                                <StudentDisplayName student={student} />
+                              </p>
                             </div>
                           </div>
                           <span className="group relative inline-flex shrink-0 cursor-help items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-1 text-[11px] font-semibold lowercase tracking-[0.01em] text-primary">
@@ -450,7 +561,9 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground">{student.realName}</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        <StudentDisplayName student={student} />
+                      </p>
                       <div className="relative">
                         <button
                           type="button"
@@ -496,7 +609,7 @@ export function TeamArrangementBoard({ classroom, createGroupPending = false, on
                               "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors",
                               isCurrentTeam ? "bg-secondary text-foreground" : "hover:bg-accent hover:text-accent-foreground",
                             )}
-                            onClick={() => moveStudent(student.id, team.id)}
+                            onClick={() => void moveStudent(student.id, team.id)}
                           >
                             <span>{teamLabel}</span>
                             {isCurrentTeam ? <Check className="size-4 text-primary" /> : null}
