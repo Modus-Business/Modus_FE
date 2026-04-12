@@ -1,18 +1,12 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-
-import { REFRESH_TOKEN_COOKIE, clearAuthCookies, logoutFromBackend } from "../../../../lib/auth/logout";
+import { getStudentRefreshToken, studentLoggedOutResponse } from "../../../../lib/api/route";
+import { clearAuthCookies, logoutFromBackend } from "../../../../lib/auth/logout";
 
 export async function POST() {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
+  const refreshToken = await getStudentRefreshToken();
 
   if (refreshToken) {
     await logoutFromBackend(refreshToken);
   }
 
-  const response = NextResponse.json({ authenticated: false });
-  clearAuthCookies(response);
-
-  return response;
+  return studentLoggedOutResponse(clearAuthCookies);
 }

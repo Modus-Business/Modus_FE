@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 
 import { AppShell } from "@modus/classroom-ui";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
@@ -29,7 +31,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ko">
       <body>
-        <AppShell role="teacher">{children}</AppShell>
+        <Providers>
+          <AppShell role="teacher">{children}</AppShell>
+          <Toaster position="top-center" richColors />
+        </Providers>
       </body>
     </html>
   );

@@ -1,19 +1,21 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { REFRESH_TOKEN_COOKIE, clearAuthCookies } from "../../../../lib/auth";
+import { getRefreshToken } from "../../../../lib/api/route";
+import { clearAuthCookies } from "../../../../lib/auth";
 import { logout } from "../../../../lib/auth/service";
 
+function loggedOutResponse() {
+  const response = NextResponse.json({ authenticated: false });
+  clearAuthCookies(response);
+  return response;
+}
+
 export async function POST() {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
+  const refreshToken = await getRefreshToken();
 
   if (refreshToken) {
     await logout(refreshToken);
   }
 
-  const response = NextResponse.json({ authenticated: false });
-  clearAuthCookies(response);
-
-  return response;
+  return loggedOutResponse();
 }

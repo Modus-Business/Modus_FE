@@ -1,29 +1,22 @@
 import { NextResponse } from "next/server";
 
+import { withJsonBody } from "../../../../lib/api/route";
 import { getSessionFromAccessToken, setAuthCookies } from "../../../../lib/auth";
-import { login, type LoginRequest } from "../../../../lib/auth/service";
+import { login, type LoginRequest, type LoginResponseData } from "../../../../lib/auth/service";
 
-export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as LoginRequest | null;
+export function POST(request: Request) {
+  return withJsonBody<LoginRequest, LoginResponseData>(request, login, {
+    onSuccess: (data) => {
+      const session = getSessionFromAccessToken(data.accessToken);
 
-  if (!body) {
-    return NextResponse.json({ message: "잘못된 요청 본문입니다." }, { status: 400 });
-  }
+      if (!session.authenticated) {
+        return NextResponse.json({ message: "로그인 응답을 해석하지 못했습니다." }, { status: 502 });
+      }
 
-  const result = await login(body);
+      const response = NextResponse.json(session);
+      setAuthCookies(response, data);
 
-  if (!result.ok) {
-    return NextResponse.json({ message: result.message }, { status: result.status });
-  }
-
-  const session = getSessionFromAccessToken(result.data.accessToken);
-
-  if (!session.authenticated) {
-    return NextResponse.json({ message: "로그인 응답을 해석하지 못했습니다." }, { status: 502 });
-  }
-
-  const response = NextResponse.json(session);
-  setAuthCookies(response, result.data);
-
-  return response;
+      return response;
+    },
+  });
 }

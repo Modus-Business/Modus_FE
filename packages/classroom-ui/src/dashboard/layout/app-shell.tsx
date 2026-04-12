@@ -126,6 +126,7 @@ export function AppShell({ role, children }: AppShellProps) {
           profileName={headerDisplayName}
           profileDescriptor={profile.descriptor}
           hideProfileDescriptor={role === "teacher"}
+          showRoleAction={!(role === "teacher" && pathname === "/classes")}
           onOpenMobileNav={() => setMobileNavOpen(true)}
           showBrandLogo={studentClassroom || teacherClassroom ? true : showHeaderBrandLogo}
           classroomContext={

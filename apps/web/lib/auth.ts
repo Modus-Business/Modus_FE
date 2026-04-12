@@ -3,8 +3,9 @@ import "server-only";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-export const ACCESS_TOKEN_COOKIE = "modus_access_token";
-export const REFRESH_TOKEN_COOKIE = "modus_refresh_token";
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "./api/route";
+
+export { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE };
 
 export type AuthRole = "student" | "teacher";
 

@@ -11,11 +11,13 @@
   "dependencies": {
     "@modus/classroom-ui": "workspace:*",
     "@next/env": "^16.2.3",
+    "@tanstack/react-query": "^5.97.0",
     "axios": "^1.15.0",
     "lucide-react": "^0.525.0",
     "next": "16.2.2",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
