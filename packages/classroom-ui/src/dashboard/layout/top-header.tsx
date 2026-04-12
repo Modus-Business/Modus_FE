@@ -44,7 +44,7 @@ export function TopHeader({
   const effectiveProfileDescriptor = classroomContext?.profileDescriptor ?? profileDescriptor;
   const compactDescriptor = effectiveProfileDescriptor.split("·")[0]?.trim() ?? effectiveProfileDescriptor;
   const useCompactProfile = role === "student" || hideProfileDescriptor || Boolean(classroomContext);
-  const useNicknameLabel = Boolean(classroomContext?.profileName);
+  const useNicknameLabel = role === "student" && Boolean(classroomContext);
   const showProfileDescriptor = !useCompactProfile && !classroomContext?.hideProfileDescriptor && compactDescriptor.length > 0;
   const shouldShowBrandLogo = classroomContext ? true : showBrandLogo;
   const profileLinkClassName = useNicknameLabel
@@ -121,8 +121,8 @@ export function TopHeader({
             aria-label="프로필 표시"
           >
             {useNicknameLabel ? (
-              <p className="whitespace-nowrap text-sm font-semibold text-foreground">
-                닉네임: {effectiveProfileName}
+              <p className="whitespace-nowrap text-sm font-semibold text-foreground" suppressHydrationWarning>
+                {mounted && effectiveProfileName ? `닉네임: ${effectiveProfileName}` : ""}
               </p>
             ) : null}
             {!useNicknameLabel ? (

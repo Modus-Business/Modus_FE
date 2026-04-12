@@ -15,6 +15,7 @@ type AppShellProps = {
   accountName?: string;
   studentJoinAction?: ReactNode;
   studentClassroomsOverride?: StudentClassroom[];
+  studentGroupNickname?: string;
   studentSubmitAssignmentPending?: boolean;
   studentSubmissionLoading?: boolean;
   studentCurrentSubmission?: {
@@ -35,6 +36,7 @@ export function AppShell({
   accountName,
   studentJoinAction,
   studentClassroomsOverride,
+  studentGroupNickname,
   studentSubmitAssignmentPending = false,
   studentSubmissionLoading = false,
   studentCurrentSubmission = null,
@@ -53,9 +55,6 @@ export function AppShell({
     : undefined;
   const teacherClassroom = teacherClassroomMatch ? getTeacherClassroom(decodeURIComponent(teacherClassroomMatch[1])) : undefined;
   const studentGroupLabel = studentClassroom?.group?.name.split("·")[0]?.trim();
-  const studentGroupNickname = studentClassroom?.group
-    ? studentClassroom.group.members.find((member) => member.realName === studentProfile.realName)?.nickname ?? studentProfile.nickname
-    : undefined;
   const classroomHeaderActions = studentClassroom ? (
     <>
       <NoticesDialog

@@ -9,6 +9,7 @@ import { AppShell, JoinClassDialog, type StudentClassroom } from "@modus/classro
 
 import { useJoinClassMutation } from "../hooks/use-classes";
 import { useMySubmissionQuery, useSubmitAssignmentMutation } from "../hooks/use-assignment-submissions";
+import { useStudentGroupDetailQuery } from "../hooks/use-group-detail";
 import { useStudentMeQuery } from "../hooks/use-settings";
 
 function readErrorMessageWithFallback(error: unknown, fallback: string) {
@@ -46,7 +47,9 @@ export function StudentAppShell({
     ? initialStudentClassrooms.find((classroom) => classroom.id === decodeURIComponent(studentClassroomMatch[1])) || null
     : null;
   const currentGroupId = currentClassroom?.group?.id || "";
+  const groupDetailQuery = useStudentGroupDetailQuery(currentGroupId);
   const mySubmissionQuery = useMySubmissionQuery(currentGroupId);
+  const currentGroupNickname = groupDetailQuery.data?.members.find((member) => member.isMe)?.displayName || "";
   const currentSubmission = mySubmissionQuery.data
     ? {
       submittedAt: new Intl.DateTimeFormat("ko-KR", {
@@ -69,6 +72,7 @@ export function StudentAppShell({
       role="student"
       accountName={accountName}
       studentClassroomsOverride={initialStudentClassrooms}
+      studentGroupNickname={currentGroupNickname}
       studentJoinAction={
         <JoinClassDialog
           iconOnly
