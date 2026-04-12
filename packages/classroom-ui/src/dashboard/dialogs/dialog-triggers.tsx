@@ -778,17 +778,65 @@ export function AssignmentSummaryDialog({
 
 export function SubmitAssignmentDialog({
   className,
+  pending = false,
+  disabled = false,
+  onSubmit,
   triggerProps,
 }: {
   className: string;
+  pending?: boolean;
+  disabled?: boolean;
+  onSubmit?: (payload: { file?: File | null; link: string }) => Promise<void> | void;
   triggerProps?: TriggerButtonProps;
 }) {
+  const [open, setOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [assignmentLink, setAssignmentLink] = useState("");
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextLink = assignmentLink.trim();
+
+    if (!selectedFile && !nextLink) {
+      return;
+    }
+
+    try {
+      await onSubmit?.({
+        file: selectedFile,
+        link: nextLink,
+      });
+    } catch {
+      return;
+    }
+
+    setSelectedFile(null);
+    setSelectedFileName(null);
+    setAssignmentLink("");
+    setOpen(false);
+  }
 
   return (
-    <Dialog>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (pending) {
+          return;
+        }
+
+        setOpen(nextOpen);
+
+        if (!nextOpen) {
+          setSelectedFile(null);
+          setSelectedFileName(null);
+          setAssignmentLink("");
+        }
+      }}
+    >
       <DialogTrigger asChild>
-        <Button {...triggerProps}>
+        <Button {...triggerProps} disabled={disabled}>
           <FileUp className="size-4" />
           과제 제출
         </Button>
@@ -800,15 +848,17 @@ export function SubmitAssignmentDialog({
             결과물은 파일 업로드 또는 링크 첨부 방식으로 제출할 수 있습니다.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-2">
+        <form className="grid gap-4 py-2" onSubmit={handleSubmit}>
           <div className="grid gap-2">
             <Label htmlFor="assignment-file">결과물 파일</Label>
             <Input
               id="assignment-file"
               type="file"
               className="sr-only"
+              disabled={pending}
               onChange={(event) => {
                 const file = event.target.files?.[0];
+                setSelectedFile(file || null);
                 setSelectedFileName(file ? file.name : null);
               }}
             />
@@ -845,13 +895,21 @@ export function SubmitAssignmentDialog({
             <Label htmlFor="assignment-link">결과물 링크</Label>
             <Input
               id="assignment-link"
+              value={assignmentLink}
+              onChange={(event) => setAssignmentLink(event.target.value)}
               placeholder="제출할 결과물 링크를 입력하세요"
+              disabled={pending}
             />
           </div>
-        </div>
-        <DialogFooter>
-          <Button>제출하기</Button>
-        </DialogFooter>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" disabled={pending}>닫기</Button>
+            </DialogClose>
+            <Button type="submit" disabled={(!selectedFile && assignmentLink.trim().length === 0) || pending}>
+              {pending ? "제출 중..." : "제출하기"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

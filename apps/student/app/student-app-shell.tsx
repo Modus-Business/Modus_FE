@@ -8,9 +8,10 @@ import { toast } from "sonner";
 import { AppShell, JoinClassDialog, type StudentClassroom } from "@modus/classroom-ui";
 
 import { useJoinClassMutation } from "../hooks/use-classes";
+import { useSubmitAssignmentMutation } from "../hooks/use-assignment-submissions";
 import { useStudentMeQuery } from "../hooks/use-settings";
 
-function readErrorMessage(error: unknown) {
+function readErrorMessageWithFallback(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
     const message = (error.response?.data as { message?: unknown } | undefined)?.message;
 
@@ -20,11 +21,11 @@ function readErrorMessage(error: unknown) {
 
     if (Array.isArray(message)) {
       const firstMessage = message.find((entry): entry is string => typeof entry === "string");
-      return firstMessage || "수업 참여에 실패했습니다.";
+      return firstMessage || fallback;
     }
   }
 
-  return "수업 참여에 실패했습니다.";
+  return fallback;
 }
 
 export function StudentAppShell({
@@ -37,6 +38,7 @@ export function StudentAppShell({
   const router = useRouter();
   const meQuery = useStudentMeQuery();
   const joinClassMutation = useJoinClassMutation();
+  const submitAssignmentMutation = useSubmitAssignmentMutation();
   const accountName = meQuery.data?.role === "student" ? meQuery.data.name : "";
 
   return (
@@ -54,12 +56,26 @@ export function StudentAppShell({
               router.refresh();
               toast.success("수업에 참여했습니다.");
             } catch (error) {
-              toast.error(readErrorMessage(error));
+              toast.error(readErrorMessageWithFallback(error, "수업 참여에 실패했습니다."));
               throw error;
             }
           }}
         />
       }
+      studentSubmitAssignmentPending={submitAssignmentMutation.isPending}
+      onStudentSubmitAssignment={async ({ groupId, file, link }) => {
+        try {
+          await submitAssignmentMutation.mutateAsync({
+            groupId,
+            file,
+            link,
+          });
+          toast.success("과제가 제출되었습니다.");
+        } catch (error) {
+          toast.error(readErrorMessageWithFallback(error, "과제 제출에 실패했습니다."));
+          throw error;
+        }
+      }}
     >
       {children}
     </AppShell>

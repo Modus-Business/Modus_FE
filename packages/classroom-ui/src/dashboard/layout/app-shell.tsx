@@ -15,10 +15,24 @@ type AppShellProps = {
   accountName?: string;
   studentJoinAction?: ReactNode;
   studentClassroomsOverride?: StudentClassroom[];
+  studentSubmitAssignmentPending?: boolean;
+  onStudentSubmitAssignment?: (payload: {
+    groupId: string;
+    file?: File | null;
+    link: string;
+  }) => Promise<void> | void;
   children: ReactNode;
 };
 
-export function AppShell({ role, accountName, studentJoinAction, studentClassroomsOverride, children }: AppShellProps) {
+export function AppShell({
+  role,
+  accountName,
+  studentJoinAction,
+  studentClassroomsOverride,
+  studentSubmitAssignmentPending = false,
+  onStudentSubmitAssignment,
+  children,
+}: AppShellProps) {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
@@ -46,6 +60,15 @@ export function AppShell({ role, accountName, studentJoinAction, studentClassroo
       />
       <SubmitAssignmentDialog
         className={studentClassroom.name}
+        pending={studentSubmitAssignmentPending}
+        disabled={!studentClassroom.group?.id}
+        onSubmit={(payload) =>
+          onStudentSubmitAssignment?.({
+            groupId: studentClassroom.group?.id || "",
+            file: payload.file,
+            link: payload.link,
+          })
+        }
         triggerProps={{ size: "lg", className: "h-11 rounded-full px-5 text-sm font-semibold shadow-[0_8px_20px_rgba(91,132,255,0.18)]" }}
       />
     </>
