@@ -1,5 +1,17 @@
-import { withTeacherAuthJson } from "../../../lib/api/route";
-import { createClass, type CreateClassRequest, type CreateClassResponseData } from "../../../lib/classes/service";
+import { withTeacherAuth, withTeacherAuthJson } from "../../../lib/api/route";
+import {
+  createClass,
+  getClasses,
+  type ClassesResponseData,
+  type CreateClassRequest,
+  type CreateClassResponseData,
+} from "../../../lib/classes/service";
+
+export function GET() {
+  return withTeacherAuth<ClassesResponseData>(
+    ({ accessToken }) => getClasses(accessToken),
+  );
+}
 
 export function POST(request: Request) {
   return withTeacherAuthJson<CreateClassRequest, CreateClassResponseData>(

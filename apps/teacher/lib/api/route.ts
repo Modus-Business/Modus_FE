@@ -28,6 +28,10 @@ type AuthJsonOptions<TData> = {
   mapData?: (data: TData) => unknown;
 };
 
+type AuthHandler<TData> = (context: {
+  accessToken: string;
+}) => Promise<ApiServiceResult<TData>>;
+
 export async function withTeacherAuthJson<TBody, TData>(
   request: Request,
   handler: AuthJsonHandler<TBody, TData>,
@@ -46,6 +50,28 @@ export async function withTeacherAuthJson<TBody, TData>(
   }
 
   const result = await handler({ accessToken, body });
+
+  if (!result.ok) {
+    return NextResponse.json({ message: result.message }, { status: result.status });
+  }
+
+  const responseBody = options.mapData ? options.mapData(result.data) : result.data;
+
+  return NextResponse.json(responseBody, { status: options.successStatus || result.status });
+}
+
+export async function withTeacherAuth<TData>(
+  handler: AuthHandler<TData>,
+  options: AuthJsonOptions<TData> = {},
+) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
+
+  if (!accessToken) {
+    return NextResponse.json({ message: "인증 토큰이 필요합니다." }, { status: 401 });
+  }
+
+  const result = await handler({ accessToken });
 
   if (!result.ok) {
     return NextResponse.json({ message: result.message }, { status: result.status });

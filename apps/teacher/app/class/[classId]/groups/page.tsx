@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Button, getTeacherClassroom, PageHeader, TeamArrangementBoard, teacherProfile } from "@modus/classroom-ui";
+import { Button, PageHeader, TeamArrangementBoard, teacherProfile } from "@modus/classroom-ui";
+import { getTeacherClassroomForRoute } from "../../../../lib/classes/lookup";
 
 type TeacherGroupArrangementPageProps = {
   params: Promise<{ classId: string }>;
@@ -9,7 +10,7 @@ type TeacherGroupArrangementPageProps = {
 
 export default async function TeacherGroupArrangementPage({ params }: TeacherGroupArrangementPageProps) {
   const { classId } = await params;
-  const classroom = getTeacherClassroom(classId);
+  const classroom = await getTeacherClassroomForRoute(classId);
   if (!classroom) notFound();
 
   return (
