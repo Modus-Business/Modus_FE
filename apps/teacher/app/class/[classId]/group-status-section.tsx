@@ -91,6 +91,7 @@ function buildSubmissionFileProxyUrl(
 
 export function GroupStatusSection({ classId, className, teams }: GroupStatusSectionProps) {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [downloadPending, setDownloadPending] = useState(false);
   const classGroupsQuery = useClassGroupsQuery(classId);
   const submissionsQuery = useClassSubmissionStatusesQuery(classId);
   const submissionsByGroupId = toSubmissionMap(submissionsQuery.data?.submissions);
@@ -112,6 +113,37 @@ export function GroupStatusSection({ classId, className, teams }: GroupStatusSec
     )
     : "";
   const groupDetailQuery = useGroupDetailQuery(selectedGroupId);
+
+  async function handleFileDownload() {
+    if (!selectedFileProxyUrl) {
+      return;
+    }
+
+    const response = await fetch(selectedFileProxyUrl, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("파일 다운로드에 실패했습니다.");
+    }
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const disposition = response.headers.get("content-disposition") || "";
+    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    const quotedMatch = disposition.match(/filename="([^"]+)"/i);
+    const fallbackName = utf8Match && utf8Match[1]
+      ? decodeURIComponent(utf8Match[1])
+      : quotedMatch && quotedMatch[1]
+        ? quotedMatch[1]
+        : "download";
+    const anchor = document.createElement("a");
+
+    anchor.href = blobUrl;
+    anchor.download = fallbackName;
+    anchor.click();
+    URL.revokeObjectURL(blobUrl);
+  }
 
   return (
     <Card className="bg-white/95">
@@ -195,10 +227,21 @@ export function GroupStatusSection({ classId, className, teams }: GroupStatusSec
                   {selectedSubmission?.fileUrl || selectedSubmission?.link ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {selectedFileProxyUrl ? (
-                        <Button asChild variant="outline" size="sm">
-                          <a href={selectedFileProxyUrl} target="_blank" rel="noreferrer">
-                            파일 다운로드
-                          </a>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={downloadPending}
+                          onClick={async () => {
+                            try {
+                              setDownloadPending(true);
+                              await handleFileDownload();
+                            } finally {
+                              setDownloadPending(false);
+                            }
+                          }}
+                        >
+                          {downloadPending ? "다운로드 중..." : "파일 다운로드"}
                         </Button>
                       ) : null}
                       {selectedSubmission.link ? (

@@ -37,6 +37,33 @@ type TriggerButtonProps = Pick<
 >;
 const NOTICE_EDIT_TEXTAREA_MAX_HEIGHT = 240;
 
+async function triggerFileDownload(url: string) {
+  const response = await fetch(url, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("파일 다운로드에 실패했습니다.");
+  }
+
+  const blob = await response.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const disposition = response.headers.get("content-disposition") || "";
+  const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const quotedMatch = disposition.match(/filename="([^"]+)"/i);
+  const fallbackName = utf8Match && utf8Match[1]
+    ? decodeURIComponent(utf8Match[1])
+    : quotedMatch && quotedMatch[1]
+      ? quotedMatch[1]
+      : "download";
+  const anchor = document.createElement("a");
+
+  anchor.href = blobUrl;
+  anchor.download = fallbackName;
+  anchor.click();
+  URL.revokeObjectURL(blobUrl);
+}
+
 function getAssignmentBadgeVariant(status: string) {
   switch (status) {
     case "제출 전":
@@ -780,12 +807,20 @@ export function SubmitAssignmentDialog({
   className,
   pending = false,
   disabled = false,
+  submissionLoading = false,
+  currentSubmission,
   onSubmit,
   triggerProps,
 }: {
   className: string;
   pending?: boolean;
   disabled?: boolean;
+  submissionLoading?: boolean;
+  currentSubmission?: {
+    submittedAt: string;
+    fileDownloadUrl?: string;
+    link?: string;
+  } | null;
   onSubmit?: (payload: { file?: File | null; link: string }) => Promise<void> | void;
   triggerProps?: TriggerButtonProps;
 }) {
@@ -793,6 +828,7 @@ export function SubmitAssignmentDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [assignmentLink, setAssignmentLink] = useState("");
+  const [downloadPending, setDownloadPending] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -849,6 +885,47 @@ export function SubmitAssignmentDialog({
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4 py-2" onSubmit={handleSubmit}>
+          {submissionLoading ? (
+            <div className="rounded-[24px] border border-border/70 bg-background/75 px-5 py-4 text-sm text-muted-foreground">
+              현재 제출 정보를 불러오는 중입니다.
+            </div>
+          ) : currentSubmission ? (
+            <div className="rounded-[24px] border border-border/70 bg-background/75 px-5 py-4">
+              <p className="text-sm font-semibold text-foreground">현재 제출 정보</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                제출 시간 · {currentSubmission.submittedAt}
+              </p>
+              {currentSubmission.fileDownloadUrl || currentSubmission.link ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                      {currentSubmission.fileDownloadUrl ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={downloadPending}
+                          onClick={async () => {
+                            try {
+                              setDownloadPending(true);
+                              await triggerFileDownload(currentSubmission.fileDownloadUrl || "");
+                            } finally {
+                              setDownloadPending(false);
+                            }
+                          }}
+                        >
+                          {downloadPending ? "다운로드 중..." : "파일 다운로드"}
+                        </Button>
+                      ) : null}
+                  {currentSubmission.link ? (
+                    <Button asChild variant="outline" size="sm">
+                      <a href={currentSubmission.link} target="_blank" rel="noreferrer">
+                        링크 확인
+                      </a>
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           <div className="grid gap-2">
             <Label htmlFor="assignment-file">결과물 파일</Label>
             <Input

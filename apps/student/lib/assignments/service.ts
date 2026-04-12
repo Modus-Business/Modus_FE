@@ -26,6 +26,13 @@ type AssignmentsServiceSuccess<T> = {
   data: T;
 };
 
+type SubmissionFileResponseData = {
+  body: ArrayBuffer;
+  contentDisposition: string;
+  contentLength: string;
+  contentType: string;
+};
+
 export type SubmitAssignmentRequest = {
   groupId: string;
   fileUrl?: string;
@@ -47,6 +54,11 @@ const studentAssignmentsClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  validateStatus: () => true,
+});
+
+const studentSubmissionFileClient = axios.create({
+  responseType: "arraybuffer",
   validateStatus: () => true,
 });
 
@@ -111,6 +123,96 @@ export async function submitAssignment(
       ok: false,
       status: 502,
       message: "과제 제출 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function getMySubmission(
+  accessToken: string,
+  groupId: string,
+): Promise<AssignmentsServiceSuccess<AssignmentSubmissionItemData | null> | AssignmentsServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await studentAssignmentsClient.get<BackendEnvelope<AssignmentSubmissionItemData | null>>(
+      `/assignments/submissions/my/${encodeURIComponent(groupId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "제출 정보를 불러오지 못했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload ? payload.data || null : null,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "제출 정보 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function fetchSubmissionFile(
+  accessToken: string,
+  submissionId: string,
+): Promise<AssignmentsServiceSuccess<SubmissionFileResponseData> | AssignmentsServiceFailure> {
+  try {
+    const response = await studentSubmissionFileClient.get<ArrayBuffer>(
+      `/assignments/submissions/${encodeURIComponent(submissionId)}/download`,
+      {
+        baseURL: API_BASE_URL,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const contentType = typeof response.headers["content-type"] === "string" ? response.headers["content-type"] : "";
+    const contentDisposition = typeof response.headers["content-disposition"] === "string" ? response.headers["content-disposition"] : "";
+    const contentLength = typeof response.headers["content-length"] === "string" ? response.headers["content-length"] : "";
+
+    if (response.status < 200 || response.status >= 300 || !response.data) {
+      return {
+        ok: false,
+        status: response.status >= 400 ? response.status : 502,
+        message: "제출 파일을 불러오지 못했습니다.",
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: {
+        body: response.data,
+        contentType,
+        contentDisposition,
+        contentLength,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "제출 파일 서버에 연결하지 못했습니다.",
     };
   }
 }

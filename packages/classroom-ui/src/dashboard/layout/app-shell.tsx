@@ -16,6 +16,12 @@ type AppShellProps = {
   studentJoinAction?: ReactNode;
   studentClassroomsOverride?: StudentClassroom[];
   studentSubmitAssignmentPending?: boolean;
+  studentSubmissionLoading?: boolean;
+  studentCurrentSubmission?: {
+    submittedAt: string;
+    fileDownloadUrl?: string;
+    link?: string;
+  } | null;
   onStudentSubmitAssignment?: (payload: {
     groupId: string;
     file?: File | null;
@@ -30,6 +36,8 @@ export function AppShell({
   studentJoinAction,
   studentClassroomsOverride,
   studentSubmitAssignmentPending = false,
+  studentSubmissionLoading = false,
+  studentCurrentSubmission = null,
   onStudentSubmitAssignment,
   children,
 }: AppShellProps) {
@@ -62,6 +70,8 @@ export function AppShell({
         className={studentClassroom.name}
         pending={studentSubmitAssignmentPending}
         disabled={!studentClassroom.group?.id}
+        submissionLoading={studentSubmissionLoading}
+        currentSubmission={studentCurrentSubmission}
         onSubmit={(payload) =>
           onStudentSubmitAssignment?.({
             groupId: studentClassroom.group?.id || "",

@@ -2,13 +2,13 @@
 
 import type { ReactNode } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { AppShell, JoinClassDialog, type StudentClassroom } from "@modus/classroom-ui";
 
 import { useJoinClassMutation } from "../hooks/use-classes";
-import { useSubmitAssignmentMutation } from "../hooks/use-assignment-submissions";
+import { useMySubmissionQuery, useSubmitAssignmentMutation } from "../hooks/use-assignment-submissions";
 import { useStudentMeQuery } from "../hooks/use-settings";
 
 function readErrorMessageWithFallback(error: unknown, fallback: string) {
@@ -35,11 +35,34 @@ export function StudentAppShell({
   children: ReactNode;
   initialStudentClassrooms: StudentClassroom[];
 }) {
+  const pathname = usePathname();
   const router = useRouter();
   const meQuery = useStudentMeQuery();
   const joinClassMutation = useJoinClassMutation();
   const submitAssignmentMutation = useSubmitAssignmentMutation();
   const accountName = meQuery.data?.role === "student" ? meQuery.data.name : "";
+  const studentClassroomMatch = pathname.match(/^\/class\/([^/]+)$/);
+  const currentClassroom = studentClassroomMatch
+    ? initialStudentClassrooms.find((classroom) => classroom.id === decodeURIComponent(studentClassroomMatch[1])) || null
+    : null;
+  const currentGroupId = currentClassroom?.group?.id || "";
+  const mySubmissionQuery = useMySubmissionQuery(currentGroupId);
+  const currentSubmission = mySubmissionQuery.data
+    ? {
+      submittedAt: new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(new Date(mySubmissionQuery.data.submittedAt)),
+      fileDownloadUrl: mySubmissionQuery.data.fileUrl
+        ? `/api/assignments/submissions/${encodeURIComponent(mySubmissionQuery.data.submissionId)}/download`
+        : "",
+      link: mySubmissionQuery.data.link || "",
+    }
+    : null;
 
   return (
     <AppShell
@@ -63,6 +86,8 @@ export function StudentAppShell({
         />
       }
       studentSubmitAssignmentPending={submitAssignmentMutation.isPending}
+      studentSubmissionLoading={Boolean(currentGroupId) && mySubmissionQuery.isLoading}
+      studentCurrentSubmission={currentSubmission}
       onStudentSubmitAssignment={async ({ groupId, file, link }) => {
         try {
           await submitAssignmentMutation.mutateAsync({

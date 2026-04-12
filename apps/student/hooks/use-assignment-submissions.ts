@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { studentAssignmentsApiClient } from "../lib/assignments/client";
 import type {
@@ -27,6 +27,8 @@ type SubmitAssignmentMutationInput = {
 };
 
 export function useSubmitAssignmentMutation() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ groupId, file, link }: SubmitAssignmentMutationInput) => {
       const trimmedLink = link ? link.trim() : "";
@@ -69,5 +71,17 @@ export function useSubmitAssignmentMutation() {
 
       return (await studentAssignmentsApiClient.post<SubmitAssignmentPayload>("/api/assignments/submissions", requestBody)).data;
     },
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ["student-my-submission", variables.groupId] });
+    },
+  });
+}
+
+export function useMySubmissionQuery(groupId: string) {
+  return useQuery({
+    queryKey: ["student-my-submission", groupId],
+    enabled: Boolean(groupId),
+    queryFn: async () =>
+      (await studentAssignmentsApiClient.get<{ submission: AssignmentSubmissionItemData | null }>(`/api/assignments/submissions/my/${encodeURIComponent(groupId)}`)).data.submission,
   });
 }
