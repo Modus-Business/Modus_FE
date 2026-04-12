@@ -1,8 +1,18 @@
+"use client";
+
 import { BellRing, UserRound } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, PageHeader, teacherProfile } from "@modus/classroom-ui";
 
+import { useTeacherSettingsQuery } from "../../hooks/use-settings";
+
 export default function TeacherSettingsPage() {
+  const settingsQuery = useTeacherSettingsQuery();
+  const settings = settingsQuery.data;
+  const isRoleMismatch = settings ? settings.role !== "teacher" : false;
+  const displayName = settings?.name || teacherProfile.realName;
+  const displayEmail = settings?.email || teacherProfile.email;
+
   return (
     <div className="-mx-2.5 -my-2.5 flex flex-col gap-0 sm:-mx-4 sm:-my-4 lg:-mx-5 lg:-my-5 xl:-mx-6 xl:-my-6">
       <PageHeader
@@ -21,8 +31,17 @@ export default function TeacherSettingsPage() {
               <CardDescription>교강사 실명과 연락 이메일을 확인하는 영역입니다.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-xs leading-6 text-muted-foreground">
-              <div className="border border-border/70 bg-background/80 p-4"><p className="text-sm font-medium text-foreground">실명</p><p className="text-sm">{teacherProfile.realName}</p></div>
-              <div className="border border-border/70 bg-background/80 p-4"><p className="text-sm font-medium text-foreground">이메일</p><p className="text-sm">{teacherProfile.email}</p></div>
+              {settingsQuery.isLoading ? (
+                <div className="border border-border/70 bg-background/80 p-4 text-sm text-muted-foreground">설정 정보를 불러오는 중입니다.</div>
+              ) : null}
+              {settingsQuery.isError ? (
+                <div className="border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">설정 정보를 불러오지 못했습니다.</div>
+              ) : null}
+              {isRoleMismatch ? (
+                <div className="border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">교강사 계정으로 로그인했는지 확인해 주세요.</div>
+              ) : null}
+              <div className="border border-border/70 bg-background/80 p-4"><p className="text-sm font-medium text-foreground">실명</p><p className="text-sm">{displayName}</p></div>
+              <div className="border border-border/70 bg-background/80 p-4"><p className="text-sm font-medium text-foreground">이메일</p><p className="text-sm">{displayEmail}</p></div>
             </CardContent>
           </Card>
           <Card className="bg-white/95">
