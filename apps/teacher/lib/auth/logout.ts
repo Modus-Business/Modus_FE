@@ -1,9 +1,8 @@
 import "server-only";
 
 import axios from "axios";
-import { NextResponse } from "next/server";
 
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "../api/route";
+import { clearAuthCookies } from "./session";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASEURL || "";
 
@@ -32,15 +31,4 @@ export async function logoutFromBackend(refreshToken: string) {
   }
 }
 
-export function clearAuthCookies(response: NextResponse) {
-  const cookieOptions = {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 0,
-  };
-
-  response.cookies.set(ACCESS_TOKEN_COOKIE, "", cookieOptions);
-  response.cookies.set(REFRESH_TOKEN_COOKIE, "", cookieOptions);
-}
+export { clearAuthCookies };
