@@ -57,6 +57,12 @@ export type CreateClassResponseData = {
   createdAt: string;
 };
 
+export type RegenerateClassCodeResponseData = {
+  classId: string;
+  classCode: string;
+  updatedAt: string;
+};
+
 const teacherClassesClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -170,6 +176,52 @@ export async function getClasses(
       ok: false,
       status: 502,
       message: "수업 목록 서버에 연결하지 못했습니다.",
+    };
+  }
+}
+
+export async function regenerateClassCode(
+  accessToken: string,
+  classId: string,
+): Promise<ClassesServiceSuccess<RegenerateClassCodeResponseData> | ClassesServiceFailure> {
+  if (!API_BASE_URL) {
+    return {
+      ok: false,
+      status: 500,
+      message: "API 주소가 설정되지 않았습니다.",
+    };
+  }
+
+  try {
+    const response = await teacherClassesClient.patch<BackendEnvelope<RegenerateClassCodeResponseData>>(
+      `/classes/${encodeURIComponent(classId)}/code`,
+      undefined,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300 || !payload?.data) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "수업 코드 재발급에 실패했습니다."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "수업 코드 재발급 서버에 연결하지 못했습니다.",
     };
   }
 }

@@ -544,9 +544,13 @@ export function NoticesDialog({
 
 export function ClassCodeDialog({
   classCode,
+  pending = false,
+  onRegenerate,
   triggerProps,
 }: {
   classCode: string;
+  pending?: boolean;
+  onRegenerate?: (currentCode: string) => Promise<string> | string;
   triggerProps?: TriggerButtonProps;
 }) {
   const [generatedCode, setGeneratedCode] = useState(classCode);
@@ -554,6 +558,16 @@ export function ClassCodeDialog({
   useEffect(() => {
     setGeneratedCode(classCode);
   }, [classCode]);
+
+  async function handleRegenerate() {
+    if (onRegenerate) {
+      const nextCode = await onRegenerate(generatedCode);
+      setGeneratedCode(nextCode);
+      return;
+    }
+
+    setGeneratedCode(regenerateClassCodeValue(generatedCode));
+  }
 
   return (
     <Dialog>
@@ -585,12 +599,12 @@ export function ClassCodeDialog({
             <Button variant="outline">닫기</Button>
           </DialogClose>
           <Button
+            type="button"
             variant="outline"
-            onClick={() =>
-              setGeneratedCode(regenerateClassCodeValue(generatedCode))
-            }
+            disabled={pending}
+            onClick={handleRegenerate}
           >
-            코드 재생성
+            {pending ? "재발급 중..." : "코드 재발급"}
           </Button>
         </DialogFooter>
       </DialogContent>
