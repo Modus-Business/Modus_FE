@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "../../lib/utils";
-import { getTeacherClassroom, studentProfile, teacherProfile, type StudentClassroom, type UserRole } from "../../lib/mock-data";
+import { getTeacherClassroom, studentProfile, teacherProfile, type NoticeItem, type StudentClassroom, type UserRole } from "../../lib/mock-data";
 import { NoticesDialog, SubmitAssignmentDialog } from "../dialogs/dialog-triggers";
 import { SidebarNav } from "./sidebar-nav";
 import { TopHeader } from "./top-header";
@@ -16,6 +16,8 @@ type AppShellProps = {
   studentJoinAction?: ReactNode;
   studentClassroomsOverride?: StudentClassroom[];
   studentGroupNickname?: string;
+  studentNotices?: NoticeItem[];
+  studentNoticesLoading?: boolean;
   studentSubmitAssignmentPending?: boolean;
   studentSubmissionLoading?: boolean;
   studentCurrentSubmission?: {
@@ -37,6 +39,8 @@ export function AppShell({
   studentJoinAction,
   studentClassroomsOverride,
   studentGroupNickname,
+  studentNotices = [],
+  studentNoticesLoading = false,
   studentSubmitAssignmentPending = false,
   studentSubmissionLoading = false,
   studentCurrentSubmission = null,
@@ -58,7 +62,8 @@ export function AppShell({
   const classroomHeaderActions = studentClassroom ? (
     <>
       <NoticesDialog
-        notices={studentClassroom.notices}
+        notices={studentNotices}
+        loading={studentNoticesLoading}
         triggerProps={{
           size: "lg",
           className:

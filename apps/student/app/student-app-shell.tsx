@@ -5,12 +5,14 @@ import axios from "axios";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { AppShell, JoinClassDialog, type StudentClassroom } from "@modus/classroom-ui";
+import { AppShell, JoinClassDialog, type NoticeItem, type StudentClassroom } from "@modus/classroom-ui";
 
 import { useJoinClassMutation } from "../hooks/use-classes";
 import { useMySubmissionQuery, useSubmitAssignmentMutation } from "../hooks/use-assignment-submissions";
 import { useStudentGroupDetailQuery } from "../hooks/use-group-detail";
+import { useStudentClassNoticesQuery } from "../hooks/use-notices";
 import { useStudentMeQuery } from "../hooks/use-settings";
+import type { NoticeItemResponseData } from "../lib/notices/service";
 
 function readErrorMessageWithFallback(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -27,6 +29,39 @@ function readErrorMessageWithFallback(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function formatNoticeDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getNoticeSummary(content: string) {
+  const firstLine = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  return firstLine || "";
+}
+
+function toNoticeItems(notices: NoticeItemResponseData[] | undefined): NoticeItem[] {
+  return (notices || []).map((notice) => ({
+    id: notice.noticeId,
+    title: notice.title,
+    date: formatNoticeDate(notice.createdAt),
+    summary: getNoticeSummary(notice.content),
+    content: notice.content,
+  }));
 }
 
 export function StudentAppShell({
@@ -47,9 +82,12 @@ export function StudentAppShell({
     ? initialStudentClassrooms.find((classroom) => classroom.id === decodeURIComponent(studentClassroomMatch[1])) || null
     : null;
   const currentGroupId = currentClassroom?.group?.id || "";
+  const currentClassId = currentClassroom?.id || "";
   const groupDetailQuery = useStudentGroupDetailQuery(currentGroupId);
+  const noticesQuery = useStudentClassNoticesQuery(currentClassId);
   const mySubmissionQuery = useMySubmissionQuery(currentGroupId);
   const currentGroupNickname = groupDetailQuery.data?.members.find((member) => member.isMe)?.displayName || "";
+  const currentNotices = toNoticeItems(noticesQuery.data?.notices);
   const currentSubmission = mySubmissionQuery.data
     ? {
       submittedAt: new Intl.DateTimeFormat("ko-KR", {
@@ -73,6 +111,8 @@ export function StudentAppShell({
       accountName={accountName}
       studentClassroomsOverride={initialStudentClassrooms}
       studentGroupNickname={currentGroupNickname}
+      studentNotices={currentNotices}
+      studentNoticesLoading={Boolean(currentClassId) && noticesQuery.isLoading}
       studentJoinAction={
         <JoinClassDialog
           iconOnly

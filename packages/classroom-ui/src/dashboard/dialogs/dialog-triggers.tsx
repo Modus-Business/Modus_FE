@@ -315,6 +315,7 @@ export function CreateClassDialog({
 
 export function NoticesDialog({
   notices,
+  loading = false,
   triggerProps,
   detailTitlePrefix,
   allowManage = false,
@@ -324,6 +325,7 @@ export function NoticesDialog({
   onDelete,
 }: {
   notices: NoticeItem[];
+  loading?: boolean;
   triggerProps?: TriggerButtonProps;
   detailTitlePrefix?: string;
   allowManage?: boolean;
@@ -612,7 +614,11 @@ export function NoticesDialog({
                 공지 항목을 선택하면 자세한 내용을 바로 확인할 수 있습니다.
               </DialogDescription>
             </DialogHeader>
-            {noticeItems.length > 0 ? (
+            {loading ? (
+              <div className="rounded-3xl border border-dashed border-border/70 bg-background/60 px-5 py-8 text-center text-sm leading-6 text-muted-foreground">
+                공지 목록을 불러오는 중입니다.
+              </div>
+            ) : noticeItems.length > 0 ? (
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
                 {noticeItems.map((notice) => (
                   <button
