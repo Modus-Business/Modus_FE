@@ -120,7 +120,7 @@ export function useGroupChat(groupId: string) {
         socketRef.current = socket;
 
         socket.on("connect", () => {
-          setConnectionState("connecting");
+          setConnectionState("joined");
           setErrorMessage(null);
           socket.emit("chat.join", { groupId });
         });
@@ -142,6 +142,7 @@ export function useGroupChat(groupId: string) {
         });
 
         socket.on("chat.history", (payload: ChatMessage[]) => {
+          setConnectionState("joined");
           setMessages((current) => mergeMessages([...current, ...payload]));
         });
 
@@ -150,6 +151,7 @@ export function useGroupChat(groupId: string) {
             return;
           }
 
+          setConnectionState("joined");
           setMessages((current) => mergeMessages([...current, payload]));
         });
 
