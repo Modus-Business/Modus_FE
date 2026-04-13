@@ -18,13 +18,17 @@ type ApiServiceResult<TData> =
       message: string;
     };
 
-type JsonHandler<TBody, TData> = (body: TBody) => Promise<ApiServiceResult<TData>>;
+type JsonHandler<TBody, TData> = (
+  body: TBody,
+) => Promise<ApiServiceResult<TData>>;
 
 type JsonOptions<TData> = {
   successStatus?: number;
   mapData?: (data: TData) => unknown;
   onSuccess?: (data: TData) => NextResponse | null;
-  onFailure?: (result: Extract<ApiServiceResult<TData>, { ok: false }>) => NextResponse | null;
+  onFailure?: (
+    result: Extract<ApiServiceResult<TData>, { ok: false }>,
+  ) => NextResponse | null;
 };
 
 export async function withJsonBody<TBody, TData>(
@@ -35,7 +39,10 @@ export async function withJsonBody<TBody, TData>(
   const body = (await request.json().catch(() => null)) as TBody | null;
 
   if (!body) {
-    return NextResponse.json({ message: "잘못된 요청 본문입니다." }, { status: 400 });
+    return NextResponse.json(
+      { message: "잘못된 요청 본문입니다." },
+      { status: 400 },
+    );
   }
 
   const result = await handler(body);
@@ -47,7 +54,10 @@ export async function withJsonBody<TBody, TData>(
       return customResponse;
     }
 
-    return NextResponse.json({ message: result.message }, { status: result.status });
+    return NextResponse.json(
+      { message: result.message },
+      { status: result.status },
+    );
   }
 
   const customResponse = options.onSuccess?.(result.data);
@@ -56,9 +66,13 @@ export async function withJsonBody<TBody, TData>(
     return customResponse;
   }
 
-  const responseBody = options.mapData ? options.mapData(result.data) : result.data;
+  const responseBody = options.mapData
+    ? options.mapData(result.data)
+    : result.data;
 
-  return NextResponse.json(responseBody, { status: options.successStatus || result.status });
+  return NextResponse.json(responseBody, {
+    status: options.successStatus || result.status,
+  });
 }
 
 export async function getAccessToken() {
