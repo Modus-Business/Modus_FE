@@ -66,7 +66,13 @@ export function GroupChat({
 }: GroupChatProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
+  const scrollTopRef = useRef(0);
+  const scrollBottomOffsetRef = useRef(0);
+  const pinnedToBottomRef = useRef(true);
+  const initializedScrollRef = useRef(false);
   const canSend = draft.trim().length > 0 && connectionState === "joined" && !sendPending;
   const canRequestAdvice = draft.trim().length > 0 && connectionState === "joined" && !sendPending;
 
@@ -82,8 +88,74 @@ export function GroupChat({
     const container = scrollRef.current;
     if (!container) return;
 
-    container.scrollTop = container.scrollHeight;
+    const scrollToBottom = () => {
+      const currentContainer = scrollRef.current;
+      if (!currentContainer) return;
+
+      bottomAnchorRef.current?.scrollIntoView({ block: "end" });
+      currentContainer.scrollTop = currentContainer.scrollHeight;
+      scrollTopRef.current = currentContainer.scrollTop;
+      scrollBottomOffsetRef.current = 0;
+      pinnedToBottomRef.current = true;
+    };
+
+    if (!initializedScrollRef.current && messages.length > 0) {
+      initializedScrollRef.current = true;
+      requestAnimationFrame(() => {
+        scrollToBottom();
+        requestAnimationFrame(scrollToBottom);
+      });
+      return;
+    }
+
+    if (pinnedToBottomRef.current) {
+      requestAnimationFrame(scrollToBottom);
+      return;
+    }
+
+    container.scrollTop = scrollTopRef.current;
   }, [messages]);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const updateScrollState = () => {
+      scrollTopRef.current = container.scrollTop;
+      const remaining = container.scrollHeight - container.clientHeight - container.scrollTop;
+      scrollBottomOffsetRef.current = remaining;
+      pinnedToBottomRef.current = remaining <= 24;
+    };
+
+    const handleResize = () => {
+      if (pinnedToBottomRef.current) {
+        container.scrollTop = container.scrollHeight;
+      } else {
+        const nextScrollTop = container.scrollHeight - container.clientHeight - scrollBottomOffsetRef.current;
+        container.scrollTop = Math.max(0, nextScrollTop);
+      }
+      scrollTopRef.current = container.scrollTop;
+    };
+
+    updateScrollState();
+    container.addEventListener("scroll", updateScrollState, { passive: true });
+
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(handleResize)
+      : null;
+
+    observer?.observe(container);
+    if (contentRef.current) {
+      observer?.observe(contentRef.current);
+    }
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      container.removeEventListener("scroll", updateScrollState);
+      observer?.disconnect();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (isComposingRef.current || event.nativeEvent.isComposing) {
@@ -141,7 +213,7 @@ export function GroupChat({
       <CardContent className="flex min-h-0 flex-1 p-0">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(249,251,255,0.96)_0%,rgba(244,247,252,0.96)_100%)]">
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
-            <div className="space-y-2.5 p-2.5 sm:p-3.5 lg:space-y-3 lg:p-4">
+            <div ref={contentRef} className="space-y-2.5 p-2.5 sm:p-3.5 lg:space-y-3 lg:p-4">
               {messages.length === 0 ? (
                 <div className="flex min-h-56 items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-white/70 px-6 text-center text-sm text-slate-500">
                   아직 메시지가 없습니다. 첫 메시지를 보내 대화를 시작해 보세요.
@@ -195,6 +267,7 @@ export function GroupChat({
                   </div>
                 </div>
               ))}
+              <div ref={bottomAnchorRef} className="h-px w-full" aria-hidden="true" />
             </div>
           </div>
 
