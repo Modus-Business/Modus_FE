@@ -15,6 +15,9 @@ export type SignupForm = {
   password: string;
   passwordConfirmation: string;
   verificationCode: string;
+  mbti: string;
+  personality: string;
+  preference: string;
 };
 
 export type LoginField = keyof LoginForm;
@@ -32,6 +35,13 @@ export type LoginSuccessPayload = {
 export type SignupSuccessPayload = {
   signedUp: boolean;
   email: string;
+  authenticated?: boolean;
+  user?: {
+    email: string;
+    role: AuthRole;
+  };
+  surveySubmitted?: boolean;
+  surveyMessage?: string;
 };
 
 export type SendVerificationSuccessPayload = {
@@ -50,7 +60,29 @@ export const emptySignupForm: SignupForm = {
   password: "",
   passwordConfirmation: "",
   verificationCode: "",
+  mbti: "",
+  personality: "",
+  preference: "",
 };
+
+export const MBTI_OPTIONS = [
+  "INTJ",
+  "INTP",
+  "ENTJ",
+  "ENTP",
+  "INFJ",
+  "INFP",
+  "ENFJ",
+  "ENFP",
+  "ISTJ",
+  "ISFJ",
+  "ESTJ",
+  "ESFJ",
+  "ISTP",
+  "ISFP",
+  "ESTP",
+  "ESFP",
+] as const;
 
 export function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -118,6 +150,24 @@ export function validateSignupProfile(form: SignupForm): FieldErrors<SignupField
     errors.passwordConfirmation = "비밀번호 확인을 입력하세요.";
   } else if (form.passwordConfirmation !== form.password) {
     errors.passwordConfirmation = "비밀번호가 일치하지 않습니다.";
+  }
+
+  return errors;
+}
+
+export function validateStudentSurvey(form: SignupForm): FieldErrors<SignupField> {
+  const errors: FieldErrors<SignupField> = {};
+
+  if (!form.mbti.trim()) {
+    errors.mbti = "MBTI를 선택하세요.";
+  }
+
+  if (!form.personality.trim()) {
+    errors.personality = "성향을 입력하세요.";
+  }
+
+  if (!form.preference.trim()) {
+    errors.preference = "선호하는 협업 방식을 입력하세요.";
   }
 
   return errors;

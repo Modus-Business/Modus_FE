@@ -13,7 +13,7 @@ import type {
 } from "../lib/auth/contracts";
 import { emptyLoginForm, emptySignupForm } from "../lib/auth/contracts";
 
-type SignupStep = "role" | "profile";
+type SignupStep = "role" | "profile" | "survey";
 
 type AuthStore = {
   mode: AuthMode;
@@ -30,6 +30,7 @@ type AuthStore = {
   openLogin: () => void;
   resetSignupFlow: () => void;
   selectSignupRole: (role: SignupRole) => void;
+  setSignupStep: (step: SignupStep) => void;
   setMode: (mode: AuthMode) => void;
   setLoginField: (field: LoginField, value: string) => void;
   setSignupField: (field: SignupField, value: string) => void;
@@ -88,6 +89,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       signupForm: emptySignupForm,
       signupFieldErrors: {},
     }),
+  setSignupStep: (step) => set({ signupStep: step }),
   setMode: (mode) => set({ mode }),
   setLoginField: (field, value) =>
     set((state) => ({

@@ -20,17 +20,20 @@ import {
   DialogTrigger,
   Input,
   PasswordVisibilityButton,
+  Textarea,
   cn,
 } from "@modus/classroom-ui";
 
 import {
   formatExpiresAt,
   getDestinationForRole,
+  MBTI_OPTIONS,
   getMissingDestinationMessage,
   readErrorMessage,
   validateLogin,
   validateSignupEmail,
   validateSignupProfile,
+  validateStudentSurvey,
   type AuthMode,
   type LoginField,
   type SignupField,
@@ -69,6 +72,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
     openLogin,
     resetSignupFlow,
     selectSignupRole,
+    setSignupStep,
     setMode,
     setLoginField,
     setSignupField,
@@ -81,6 +85,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
   const loginMutation = useLoginMutation();
   const signupMutation = useSignupMutation();
   const sendVerificationMutation = useSendSignupVerificationMutation();
+  const [signupSurveyError, setSignupSurveyError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setMode(initialMode);
@@ -108,6 +113,57 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
 
     window.history.replaceState(null, "", targetUrl);
   }, [mode]);
+
+  React.useEffect(() => {
+    if (mode !== "signup") {
+      setSignupSurveyError(null);
+    }
+  }, [mode]);
+
+  const handleSignupFieldChange = React.useCallback(
+    (field: SignupField, value: string) => {
+      setSignupSurveyError(null);
+      setSignupField(field, value);
+    },
+    [setSignupField],
+  );
+
+  const handleSelectSignupRole = React.useCallback(
+    (role: "student" | "teacher") => {
+      setSignupSurveyError(null);
+      selectSignupRole(role);
+    },
+    [selectSignupRole],
+  );
+
+  const handleResetSignupFlow = React.useCallback(() => {
+    setSignupSurveyError(null);
+    resetSignupFlow();
+  }, [resetSignupFlow]);
+
+  const handleGoToStudentSurvey = React.useCallback(() => {
+    const errors = validateSignupProfile(signupForm);
+
+    if (!verificationRequested) {
+      errors.verificationCode = "이메일 인증을 먼저 진행하세요.";
+    } else if (!signupForm.verificationCode.trim()) {
+      errors.verificationCode = "인증번호를 입력하세요.";
+    }
+
+    setSignupFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    setSignupSurveyError(null);
+    setSignupStep("survey");
+  }, [setSignupFieldErrors, setSignupStep, signupForm, verificationRequested]);
+
+  const handleBackToProfile = React.useCallback(() => {
+    setSignupSurveyError(null);
+    setSignupStep("profile");
+  }, [setSignupStep]);
 
   const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -170,11 +226,12 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
 
     if (!signupRole) {
       toast.error("역할을 먼저 선택하세요.");
-      resetSignupFlow();
+      handleResetSignupFlow();
       return;
     }
 
     const errors = validateSignupProfile(signupForm);
+    const studentSurveyErrors = signupRole === "student" ? validateStudentSurvey(signupForm) : {};
 
     if (!verificationRequested) {
       errors.verificationCode = "이메일 인증을 먼저 진행하세요.";
@@ -182,20 +239,46 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
       errors.verificationCode = "인증번호를 입력하세요.";
     }
 
-    setSignupFieldErrors(errors);
+    const mergedErrors =
+      signupRole === "student"
+        ? {
+            ...errors,
+            ...studentSurveyErrors,
+          }
+        : errors;
 
-    if (Object.keys(errors).length > 0) {
+    setSignupFieldErrors(mergedErrors);
+
+    if (Object.keys(mergedErrors).length > 0) {
       return;
     }
 
     try {
-      await signupMutation.mutateAsync({
+      setSignupSurveyError(null);
+
+      const payload = await signupMutation.mutateAsync({
         ...signupForm,
         role: signupRole,
         name: signupForm.name.trim(),
         email: signupForm.email.trim(),
         verificationCode: signupForm.verificationCode.trim(),
+        mbti: signupForm.mbti.trim(),
+        personality: signupForm.personality.trim(),
+        preference: signupForm.preference.trim(),
       });
+
+      if (signupRole === "student") {
+        if (payload.surveySubmitted) {
+          prepareLoginAfterSignup(signupForm.email.trim());
+          toast.success("회원가입이 완료되었습니다. 로그인하세요.");
+          return;
+        }
+
+        if (payload.authenticated && payload.user?.role === "student" && payload.surveySubmitted === false) {
+          setSignupSurveyError(payload.surveyMessage || "학생 설문 저장에 실패했습니다. 다시 시도해 주세요.");
+          return;
+        }
+      }
 
       prepareLoginAfterSignup(signupForm.email.trim());
       toast.success("회원가입이 완료되었습니다. 로그인하세요.");
@@ -239,13 +322,16 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
           form={signupForm}
           pending={signupMutation.isPending}
           role={signupRole}
+          surveyError={signupSurveyError}
           step={signupStep}
           showVerificationInput={showVerificationInput}
           sendVerificationPending={sendVerificationMutation.isPending}
-          onBackToRoleSelect={resetSignupFlow}
-          onChange={setSignupField}
+          onBackToRoleSelect={handleResetSignupFlow}
+          onBackToProfile={handleBackToProfile}
+          onContinueToSurvey={handleGoToStudentSurvey}
+          onChange={handleSignupFieldChange}
           onSendVerification={handleSendVerification}
-          onSelectRole={selectSignupRole}
+          onSelectRole={handleSelectSignupRole}
           onSubmitSignup={handleSignupSubmit}
           onSwitchToLogin={openLogin}
         />
@@ -437,10 +523,13 @@ function SignupCard({
   form,
   pending,
   role,
+  surveyError,
   step,
   showVerificationInput,
   sendVerificationPending,
   onBackToRoleSelect,
+  onBackToProfile,
+  onContinueToSurvey,
   onChange,
   onSendVerification,
   onSelectRole,
@@ -456,13 +545,19 @@ function SignupCard({
     password: string;
     passwordConfirmation: string;
     verificationCode: string;
+    mbti: string;
+    personality: string;
+    preference: string;
   };
   pending: boolean;
   role: "student" | "teacher" | null;
-  step: "role" | "profile";
+  surveyError: string | null;
+  step: "role" | "profile" | "survey";
   showVerificationInput: boolean;
   sendVerificationPending: boolean;
   onBackToRoleSelect: () => void;
+  onBackToProfile: () => void;
+  onContinueToSurvey: () => void;
   onChange: (field: SignupField, value: string) => void;
   onSendVerification: () => Promise<void>;
   onSelectRole: (role: "student" | "teacher") => void;
@@ -475,7 +570,7 @@ function SignupCard({
   const formattedExpiresAt = formatExpiresAt(expiresAt);
 
   React.useEffect(() => {
-    if (step !== "profile") {
+    if (step === "role") {
       setResetDialogOpen(false);
     }
   }, [step]);
@@ -541,7 +636,7 @@ function SignupCard({
               </div>
             ) : null}
 
-            {step === "profile" ? (
+            {step === "profile" || step === "survey" ? (
               <div className="space-y-4">
                 <div className="flex flex-col gap-2 rounded-[18px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <div>
@@ -549,118 +644,176 @@ function SignupCard({
                   </div>
                   <button
                     type="button"
-                    onClick={onBackToRoleSelect}
+                    onClick={step === "survey" ? onBackToProfile : onBackToRoleSelect}
                     className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                   >
                     <ChevronLeft className="size-4" />
-                    역할 변경
+                    {step === "survey" ? "기본 정보 수정" : "역할 변경"}
                   </button>
                 </div>
 
                 <form className="space-y-3.5 sm:space-y-4" onSubmit={onSubmitSignup}>
-                  <div>
-                    <div className="relative">
-                      <UserRound className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                      <Input
-                        id="name"
-                        value={form.name}
-                        placeholder="본명을 입력하세요"
-                        autoComplete="name"
-                        onChange={(event) => onChange("name", event.target.value)}
-                        className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
-                      />
-                    </div>
-                    <FieldError message={fieldErrors.name} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-2">
-                      <div className="relative flex-1">
-                        <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                        <Input
-                          id="signup-email"
-                          type="email"
-                          value={form.email}
-                          placeholder="이메일을 입력하세요"
-                          autoComplete="email"
-                          onChange={(event) => onChange("email", event.target.value)}
-                          className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 pr-4 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={sendVerificationPending}
-                        onClick={onSendVerification}
-                        className="mt-1 h-[44px] rounded-[14px] border-primary/15 bg-[#f8faff] px-4 text-sm font-semibold text-primary hover:bg-primary/5 sm:h-[48px] sm:rounded-[16px]"
-                      >
-                        {sendVerificationPending ? "전송 중" : showVerificationInput ? "재인증" : "인증"}
-                      </Button>
-                    </div>
-                    <FieldError message={fieldErrors.email} />
-
-                    {showVerificationInput ? (
-                      <div className="space-y-2">
+                  {step === "profile" ? (
+                    <>
+                      <div>
                         <div className="relative">
-                          <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                          <UserRound className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
                           <Input
-                            id="verification-code"
-                            value={form.verificationCode}
-                            placeholder="인증번호를 입력하세요"
-                            autoComplete="one-time-code"
-                            onChange={(event) => onChange("verificationCode", event.target.value)}
+                            id="name"
+                            value={form.name}
+                            placeholder="본명을 입력하세요"
+                            autoComplete="name"
+                            onChange={(event) => onChange("name", event.target.value)}
                             className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
                           />
                         </div>
-                        <p className="text-xs leading-5 text-muted-foreground">
-                          이메일로 받은 인증코드를 입력해 주세요.
-                          {formattedExpiresAt ? ` 인증 유효시간: ${formattedExpiresAt}` : ""}
-                        </p>
-                        <FieldError message={fieldErrors.verificationCode} />
+                        <FieldError message={fieldErrors.name} />
                       </div>
-                    ) : null}
-                  </div>
 
-                  <div>
-                    <div className="relative">
-                      <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                      <Input
-                        id="signup-password"
-                        type={passwordVisible ? "text" : "password"}
-                        value={form.password}
-                        placeholder="비밀번호를 입력하세요"
-                        autoComplete="new-password"
-                        onChange={(event) => onChange("password", event.target.value)}
-                        className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pr-13 pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pr-14 sm:pl-12 sm:text-base"
-                      />
-                      <PasswordVisibilityButton
-                        visible={passwordVisible}
-                        onToggle={() => setPasswordVisible((current) => !current)}
-                      />
-                    </div>
-                    <FieldError message={fieldErrors.password} />
-                  </div>
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <div className="relative flex-1">
+                            <Mail className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                            <Input
+                              id="signup-email"
+                              type="email"
+                              value={form.email}
+                              placeholder="이메일을 입력하세요"
+                              autoComplete="email"
+                              onChange={(event) => onChange("email", event.target.value)}
+                              className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 pr-4 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={sendVerificationPending}
+                            onClick={onSendVerification}
+                            className="mt-1 h-[44px] rounded-[14px] border-primary/15 bg-[#f8faff] px-4 text-sm font-semibold text-primary hover:bg-primary/5 sm:h-[48px] sm:rounded-[16px]"
+                          >
+                            {sendVerificationPending ? "전송 중" : showVerificationInput ? "재인증" : "인증"}
+                          </Button>
+                        </div>
+                        <FieldError message={fieldErrors.email} />
 
-                  <div>
-                    <div className="relative">
-                      <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
-                      <Input
-                        id="confirm-password"
-                        type={passwordConfirmationVisible ? "text" : "password"}
-                        value={form.passwordConfirmation}
-                        placeholder="비밀번호를 다시 입력하세요"
-                        autoComplete="new-password"
-                        onChange={(event) => onChange("passwordConfirmation", event.target.value)}
-                        className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pr-13 pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pr-14 sm:pl-12 sm:text-base"
-                      />
-                      <PasswordVisibilityButton
-                        visible={passwordConfirmationVisible}
-                        onToggle={() => setPasswordConfirmationVisible((current) => !current)}
-                      />
+                        {showVerificationInput ? (
+                          <div className="space-y-2">
+                            <div className="relative">
+                              <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                              <Input
+                                id="verification-code"
+                                value={form.verificationCode}
+                                placeholder="인증번호를 입력하세요"
+                                autoComplete="one-time-code"
+                                onChange={(event) => onChange("verificationCode", event.target.value)}
+                                className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pl-12 sm:text-base"
+                              />
+                            </div>
+                            <p className="text-xs leading-5 text-muted-foreground">
+                              이메일로 받은 인증코드를 입력해 주세요.
+                              {formattedExpiresAt ? ` 인증 유효시간: ${formattedExpiresAt}` : ""}
+                            </p>
+                            <FieldError message={fieldErrors.verificationCode} />
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div>
+                        <div className="relative">
+                          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                          <Input
+                            id="signup-password"
+                            type={passwordVisible ? "text" : "password"}
+                            value={form.password}
+                            placeholder="비밀번호를 입력하세요"
+                            autoComplete="new-password"
+                            onChange={(event) => onChange("password", event.target.value)}
+                            className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pr-13 pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pr-14 sm:pl-12 sm:text-base"
+                          />
+                          <PasswordVisibilityButton
+                            visible={passwordVisible}
+                            onToggle={() => setPasswordVisible((current) => !current)}
+                          />
+                        </div>
+                        <FieldError message={fieldErrors.password} />
+                      </div>
+
+                      <div>
+                        <div className="relative">
+                          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:left-5" />
+                          <Input
+                            id="confirm-password"
+                            type={passwordConfirmationVisible ? "text" : "password"}
+                            value={form.passwordConfirmation}
+                            placeholder="비밀번호를 다시 입력하세요"
+                            autoComplete="new-password"
+                            onChange={(event) => onChange("passwordConfirmation", event.target.value)}
+                            className="h-[52px] rounded-[16px] border-transparent bg-[#eef3fb] pr-13 pl-11 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:h-[56px] sm:rounded-[18px] sm:pr-14 sm:pl-12 sm:text-base"
+                          />
+                          <PasswordVisibilityButton
+                            visible={passwordConfirmationVisible}
+                            onToggle={() => setPasswordConfirmationVisible((current) => !current)}
+                          />
+                        </div>
+                        <FieldError message={fieldErrors.passwordConfirmation} />
+                      </div>
+                    </>
+                  ) : null}
+
+                  {step === "survey" && role === "student" ? (
+                    <div className="space-y-3.5 sm:space-y-4">
+                      <div className="space-y-1 px-1">
+                        <p className="text-sm font-semibold text-foreground sm:text-base">학습 성향 설문</p>
+                        <p className="text-xs leading-5 text-muted-foreground sm:text-sm">
+                          모둠 활동 매칭과 협업 스타일 파악을 위해 학생 설문을 함께 입력해 주세요.
+                        </p>
+                        {surveyError ? <FieldError message={surveyError} /> : null}
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="px-1 text-xs font-medium text-muted-foreground sm:text-sm">MBTI</p>
+                        <select
+                          id="signup-mbti"
+                          value={form.mbti}
+                          onChange={(event) => onChange("mbti", event.target.value)}
+                          className="h-[52px] w-full rounded-[16px] border-transparent bg-[#eef3fb] px-4 text-[15px] text-foreground shadow-none outline-none sm:h-[56px] sm:rounded-[18px] sm:px-5 sm:text-base"
+                        >
+                          <option value="">MBTI를 선택하세요</option>
+                          {MBTI_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                        <FieldError message={fieldErrors.mbti} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="px-1 text-xs font-medium text-muted-foreground sm:text-sm">성향</p>
+                        <Textarea
+                          id="signup-personality"
+                          value={form.personality}
+                          placeholder="예: 계획적으로 움직이는 편이고 역할이 분명한 협업을 선호합니다."
+                          onChange={(event) => onChange("personality", event.target.value)}
+                          className="min-h-[112px] rounded-[16px] border-transparent bg-[#eef3fb] px-4 py-3 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:rounded-[18px] sm:px-5 sm:py-4 sm:text-base"
+                        />
+                        <FieldError message={fieldErrors.personality} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="px-1 text-xs font-medium text-muted-foreground sm:text-sm">선호 협업 방식</p>
+                        <Textarea
+                          id="signup-preference"
+                          value={form.preference}
+                          placeholder="예: 정리된 문서 협업과 일정 기반 진행을 선호합니다."
+                          onChange={(event) => onChange("preference", event.target.value)}
+                          className="min-h-[112px] rounded-[16px] border-transparent bg-[#eef3fb] px-4 py-3 text-[15px] shadow-none placeholder:text-[#7f8ba3] sm:rounded-[18px] sm:px-5 sm:py-4 sm:text-base"
+                        />
+                        <FieldError message={fieldErrors.preference} />
+                      </div>
                     </div>
-                    <FieldError message={fieldErrors.passwordConfirmation} />
-                  </div>
+                  ) : null}
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
@@ -694,12 +847,19 @@ function SignupCard({
                     </Dialog>
 
                     <Button
-                      type="submit"
+                      type={step === "profile" && role === "student" ? "button" : "submit"}
                       size="lg"
                       disabled={pending}
                       className="h-12 rounded-[15px] text-base shadow-[0_16px_34px_rgba(91,132,255,0.22)] sm:h-[52px] sm:rounded-[16px] sm:text-[1.02rem]"
+                      onClick={step === "profile" && role === "student" ? onContinueToSurvey : undefined}
                     >
-                      {pending ? "가입 중..." : "회원가입"}
+                      {step === "profile" && role === "student"
+                        ? "다음"
+                        : pending
+                          ? (role === "student" && surveyError ? "저장 중..." : "가입 중...")
+                          : role === "student" && surveyError
+                            ? "설문 다시 저장"
+                            : "회원가입"}
                     </Button>
                   </div>
                 </form>
