@@ -26,6 +26,10 @@ export type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
 export type LoginSuccessPayload = {
   authenticated: boolean;
+  authTransfer?: {
+    endpoint: string;
+    token: string;
+  };
   user?: {
     email: string;
     role: AuthRole;

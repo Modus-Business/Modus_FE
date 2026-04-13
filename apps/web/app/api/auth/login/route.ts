@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { buildAuthNavigationPlan } from "@modus/classroom-ui/auth";
 
 import { withJsonBody } from "../../../../lib/api/route";
 import { getSessionFromAccessToken, setAuthCookies } from "../../../../lib/auth";
@@ -13,8 +14,32 @@ export function POST(request: Request) {
         return NextResponse.json({ message: "로그인 응답을 해석하지 못했습니다." }, { status: 502 });
       }
 
-      const response = NextResponse.json(session);
-      setAuthCookies(response, data);
+      const navigationPlan = buildAuthNavigationPlan({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        requestUrl: request.url,
+        role: session.user.role,
+      });
+
+      if (!navigationPlan.ok) {
+        return NextResponse.json({ message: navigationPlan.message }, { status: 500 });
+      }
+
+      const response = NextResponse.json({
+        ...session,
+        ...(navigationPlan.plan.mode === "handoff"
+          ? {
+              authTransfer: {
+                endpoint: navigationPlan.plan.endpoint,
+                token: navigationPlan.plan.token,
+              },
+            }
+          : {}),
+      });
+
+      if (navigationPlan.plan.mode === "direct") {
+        setAuthCookies(response, data);
+      }
 
       return response;
     },

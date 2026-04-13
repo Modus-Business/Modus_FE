@@ -1,10 +1,11 @@
 import "server-only";
 
+import { getApiBaseUrl } from "@modus/classroom-ui/env";
 import axios from "axios";
 
 import { clearAuthCookies } from "./session";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASEURL || "";
+export const API_BASE_URL = getApiBaseUrl();
 
 const teacherAuthClient = axios.create({
   baseURL: API_BASE_URL,

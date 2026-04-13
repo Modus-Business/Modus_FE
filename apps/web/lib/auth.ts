@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getAuthCookieDomain } from "@modus/classroom-ui/auth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -91,13 +92,20 @@ export async function getSessionFromCookies(): Promise<SessionPayload> {
   return getSessionFromAccessToken(cookieStore.get(ACCESS_TOKEN_COOKIE)?.value);
 }
 
-export function setAuthCookies(response: NextResponse, tokens: TokenPair) {
-  const baseOptions = {
+function getBaseCookieOptions() {
+  const domain = getAuthCookieDomain();
+
+  return {
     httpOnly: true,
     sameSite: "lax" as const,
     path: "/",
     secure: process.env.NODE_ENV === "production",
+    ...(domain ? { domain } : {}),
   };
+}
+
+export function setAuthCookies(response: NextResponse, tokens: TokenPair) {
+  const baseOptions = getBaseCookieOptions();
 
   response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, {
     ...baseOptions,
@@ -111,19 +119,15 @@ export function setAuthCookies(response: NextResponse, tokens: TokenPair) {
 }
 
 export function clearAuthCookies(response: NextResponse) {
+  const baseOptions = getBaseCookieOptions();
+
   response.cookies.set(ACCESS_TOKEN_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
+    ...baseOptions,
     maxAge: 0,
   });
 
   response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
+    ...baseOptions,
     maxAge: 0,
   });
 }

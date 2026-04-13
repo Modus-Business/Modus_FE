@@ -1,9 +1,10 @@
 import "server-only";
 
+import { getApiBaseUrl } from "@modus/classroom-ui/env";
 import axios from "axios";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASEURL || "";
+  getApiBaseUrl();
 
 export type BackendEnvelope<T> = {
   success?: boolean;

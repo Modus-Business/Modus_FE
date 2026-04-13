@@ -1,8 +1,9 @@
 "use client";
 
+import { getApiBaseUrl } from "@modus/classroom-ui/env";
 import { io } from "socket.io-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASEURL || "";
+const API_BASE_URL = getApiBaseUrl();
 
 export function createChatSocket(token: string) {
   if (!API_BASE_URL) {

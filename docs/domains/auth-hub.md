@@ -31,8 +31,9 @@
 ### Auth screen
 
 - 실질적인 인증 UI는 `auth-screen.tsx`에 집중되어 있습니다.
-- 현재는 화면 상태와 UX 흐름 정리가 중심이며, 외부 인증 API 연동 코드는 아직 없습니다.
+- 브라우저는 `apps/web`의 `/api/auth/*` BFF를 호출하고, BFF가 서버에서 `API_BASE_URL` 백엔드와 통신합니다.
+- student/teacher가 별도 호스트라면 로그인 성공 후 각 앱의 `/api/auth/complete-login`으로 handoff를 보내 해당 호스트에 다시 쿠키를 설정합니다.
 
 ## 해석
 
-이 도메인은 "인증 처리 백엔드"보다 "인증 진입 UX"를 담당하는 프런트엔드 허브 모듈입니다.
+이 도메인은 인증 진입 UX를 담당하는 허브이면서, 분리 배포된 student/teacher 앱으로 인증 상태를 안전하게 넘기는 시작점 역할도 맡습니다.

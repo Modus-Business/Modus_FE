@@ -52,6 +52,22 @@ type SignupCompletionSurvey = NonNullable<
 const layerClassName =
   "flex h-full min-h-full w-full items-center justify-center overflow-hidden p-3 sm:p-4 lg:absolute lg:inset-0 lg:grid lg:grid-cols-[1.04fr_0.96fr] lg:gap-5 lg:p-0 xl:gap-6";
 
+function submitAuthHandoffForm(endpoint: string, token: string) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = endpoint;
+  form.style.display = "none";
+
+  const tokenField = document.createElement("input");
+  tokenField.type = "hidden";
+  tokenField.name = "token";
+  tokenField.value = token;
+
+  form.append(tokenField);
+  document.body.append(form);
+  form.submit();
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) {
     return null;
@@ -200,6 +216,11 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
 
       if (!payload?.authenticated || !payload.user) {
         toast.error("로그인 응답을 확인하지 못했습니다.");
+        return;
+      }
+
+      if (payload.authTransfer) {
+        submitAuthHandoffForm(payload.authTransfer.endpoint, payload.authTransfer.token);
         return;
       }
 

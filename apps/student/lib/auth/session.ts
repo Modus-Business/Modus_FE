@@ -1,11 +1,13 @@
 import "server-only";
 
+import { getAuthCookieDomain } from "@modus/classroom-ui/auth";
+import { getApiBaseUrl } from "@modus/classroom-ui/env";
 import axios from "axios";
 import { NextResponse } from "next/server";
 
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "../api/route";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASEURL || "";
+const API_BASE_URL = getApiBaseUrl();
 
 type JwtPayload = {
   email?: string;
@@ -71,11 +73,13 @@ function getTokenExpiry(token: string): Date | undefined {
 }
 
 export function setAuthCookies(response: NextResponse, tokens: TokenPair) {
+  const domain = getAuthCookieDomain();
   const baseOptions = {
     httpOnly: true,
     sameSite: "lax" as const,
     path: "/",
     secure: process.env.NODE_ENV === "production",
+    ...(domain ? { domain } : {}),
   };
 
   response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, {
@@ -90,11 +94,13 @@ export function setAuthCookies(response: NextResponse, tokens: TokenPair) {
 }
 
 export function clearAuthCookies(response: NextResponse) {
+  const domain = getAuthCookieDomain();
   const cookieOptions = {
     httpOnly: true,
     sameSite: "lax" as const,
     path: "/",
     secure: process.env.NODE_ENV === "production",
+    ...(domain ? { domain } : {}),
     maxAge: 0,
   };
 
