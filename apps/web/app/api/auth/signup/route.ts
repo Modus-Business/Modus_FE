@@ -8,7 +8,7 @@ import {
   type LoginResponseData,
   type SignupRequest,
 } from "../../../../lib/auth/service";
-import { submitSurvey, type SubmitSurveyRequest } from "../../../../lib/survey/service";
+import { getMySurvey, submitSurvey, type SubmitSurveyRequest, type SurveyResponseData } from "../../../../lib/survey/service";
 
 type SignupRouteRequest = SignupRequest & SubmitSurveyRequest;
 
@@ -22,6 +22,7 @@ type SignupRouteSuccessBody = {
   };
   surveySubmitted?: boolean;
   surveyMessage?: string;
+  survey?: SurveyResponseData | null;
 };
 
 function buildSignupBody(body: SignupRouteRequest): SignupRequest {
@@ -90,13 +91,23 @@ export async function POST(request: Request) {
   ) {
     const surveyResult = await submitSurvey(currentAccessToken, buildSurveyBody(body));
 
+    if (surveyResult.ok) {
+      const surveyDetailResult = await getMySurvey(currentAccessToken);
+      return createSignedUpResponse({
+        signedUp: true,
+        email: signupBody.email,
+        surveySubmitted: true,
+        survey: surveyDetailResult.ok ? surveyDetailResult.data : surveyResult.data,
+      });
+    }
+
     return NextResponse.json({
       signedUp: true,
       email: signupBody.email,
       authenticated: true,
       user: currentSession.user,
-      surveySubmitted: surveyResult.ok,
-      surveyMessage: surveyResult.ok ? undefined : surveyResult.message,
+      surveySubmitted: false,
+      surveyMessage: surveyResult.message,
     } satisfies SignupRouteSuccessBody);
   }
 
@@ -129,10 +140,12 @@ export async function POST(request: Request) {
   const surveyResult = await submitSurvey(loginResult.data.accessToken, buildSurveyBody(body));
 
   if (surveyResult.ok) {
+    const surveyDetailResult = await getMySurvey(loginResult.data.accessToken);
     return createSignedUpResponse({
       signedUp: true,
       email: signupBody.email,
       surveySubmitted: true,
+      survey: surveyDetailResult.ok ? surveyDetailResult.data : surveyResult.data,
     });
   }
 

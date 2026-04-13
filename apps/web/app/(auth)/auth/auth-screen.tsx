@@ -45,6 +45,10 @@ type AuthScreenProps = {
   initialMode?: AuthMode;
 };
 
+type SignupCompletionSurvey = NonNullable<
+  import("../../../lib/auth/contracts").SignupSuccessPayload["survey"]
+>;
+
 const layerClassName =
   "flex h-full min-h-full w-full items-center justify-center overflow-hidden p-3 sm:p-4 lg:absolute lg:inset-0 lg:grid lg:grid-cols-[1.04fr_0.96fr] lg:gap-5 lg:p-0 xl:gap-6";
 
@@ -86,6 +90,10 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
   const signupMutation = useSignupMutation();
   const sendVerificationMutation = useSendSignupVerificationMutation();
   const [signupSurveyError, setSignupSurveyError] = React.useState<string | null>(null);
+  const [signupCompletion, setSignupCompletion] = React.useState<{
+    email: string;
+    survey: SignupCompletionSurvey;
+  } | null>(null);
 
   React.useEffect(() => {
     setMode(initialMode);
@@ -117,6 +125,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
   React.useEffect(() => {
     if (mode !== "signup") {
       setSignupSurveyError(null);
+      setSignupCompletion(null);
     }
   }, [mode]);
 
@@ -138,6 +147,7 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
 
   const handleResetSignupFlow = React.useCallback(() => {
     setSignupSurveyError(null);
+    setSignupCompletion(null);
     resetSignupFlow();
   }, [resetSignupFlow]);
 
@@ -164,6 +174,16 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
     setSignupSurveyError(null);
     setSignupStep("profile");
   }, [setSignupStep]);
+
+  const handleSignupResultContinue = React.useCallback(() => {
+    if (!signupCompletion) {
+      return;
+    }
+
+    prepareLoginAfterSignup(signupCompletion.email);
+    setSignupCompletion(null);
+    toast.success("회원가입이 완료되었습니다. 로그인하세요.");
+  }, [prepareLoginAfterSignup, signupCompletion]);
 
   const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -269,6 +289,14 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
 
       if (signupRole === "student") {
         if (payload.surveySubmitted) {
+          if (payload.survey) {
+            setSignupCompletion({
+              email: signupForm.email.trim(),
+              survey: payload.survey,
+            });
+            return;
+          }
+
           prepareLoginAfterSignup(signupForm.email.trim());
           toast.success("회원가입이 완료되었습니다. 로그인하세요.");
           return;
@@ -322,12 +350,14 @@ export function AuthScreen({ initialMode = "login" }: AuthScreenProps) {
           form={signupForm}
           pending={signupMutation.isPending}
           role={signupRole}
+          completion={signupCompletion}
           surveyError={signupSurveyError}
           step={signupStep}
           showVerificationInput={showVerificationInput}
           sendVerificationPending={sendVerificationMutation.isPending}
           onBackToRoleSelect={handleResetSignupFlow}
           onBackToProfile={handleBackToProfile}
+          onCompletionContinue={handleSignupResultContinue}
           onContinueToSurvey={handleGoToStudentSurvey}
           onChange={handleSignupFieldChange}
           onSendVerification={handleSendVerification}
@@ -523,12 +553,14 @@ function SignupCard({
   form,
   pending,
   role,
+  completion,
   surveyError,
   step,
   showVerificationInput,
   sendVerificationPending,
   onBackToRoleSelect,
   onBackToProfile,
+  onCompletionContinue,
   onContinueToSurvey,
   onChange,
   onSendVerification,
@@ -551,12 +583,17 @@ function SignupCard({
   };
   pending: boolean;
   role: "student" | "teacher" | null;
+  completion: {
+    email: string;
+    survey: SignupCompletionSurvey;
+  } | null;
   surveyError: string | null;
   step: "role" | "profile" | "survey";
   showVerificationInput: boolean;
   sendVerificationPending: boolean;
   onBackToRoleSelect: () => void;
   onBackToProfile: () => void;
+  onCompletionContinue: () => void;
   onContinueToSurvey: () => void;
   onChange: (field: SignupField, value: string) => void;
   onSendVerification: () => Promise<void>;
@@ -636,7 +673,39 @@ function SignupCard({
               </div>
             ) : null}
 
-            {step === "profile" || step === "survey" ? (
+            {completion ? (
+              <div className="space-y-5">
+                <div className="space-y-1 px-1 text-center">
+                  <p className="text-sm font-semibold text-primary/80">설문 결과</p>
+                  <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
+                    {completion.survey.mbti || "학습 성향"}
+                  </h2>
+                </div>
+
+                <div className="overflow-hidden rounded-[28px] border border-[#f3dfab] bg-[linear-gradient(180deg,#fff7dd_0%,#fffaf0_100%)] px-6 py-8 text-center shadow-[0_18px_40px_rgba(212,169,37,0.12)]">
+                  <div className="mx-auto flex size-24 items-center justify-center rounded-full bg-white/70 text-3xl font-semibold text-[#c79d18] shadow-[0_12px_28px_rgba(199,157,24,0.16)] sm:size-28 sm:text-4xl">
+                    {completion.survey.mbti?.slice(0, 2) || "S"}
+                  </div>
+                  <p className="mt-6 text-3xl font-semibold tracking-tight text-[#d1ab1d] sm:text-4xl">
+                    {completion.survey.mbti || "학습 성향"}
+                  </p>
+                  <p className="mt-3 text-sm font-medium text-slate-500 sm:text-base">{completion.email}</p>
+                  <div className="mt-6 space-y-3 text-left text-sm leading-7 text-slate-600 sm:text-[15px]">
+                    <p className="rounded-[20px] bg-white/70 px-4 py-3">{completion.survey.personality}</p>
+                    <p className="rounded-[20px] bg-white/70 px-4 py-3">{completion.survey.preference}</p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  size="lg"
+                  className="h-12 w-full rounded-[15px] text-base shadow-[0_16px_34px_rgba(91,132,255,0.22)] sm:h-[52px] sm:rounded-[16px] sm:text-[1.02rem]"
+                  onClick={onCompletionContinue}
+                >
+                  로그인하기
+                </Button>
+              </div>
+            ) : step === "profile" || step === "survey" ? (
               <div className="space-y-4">
                 <div className="flex flex-col gap-2 rounded-[18px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <div>

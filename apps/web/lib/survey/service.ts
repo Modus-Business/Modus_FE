@@ -24,6 +24,42 @@ export type SurveyResponseData = {
   updatedAt: string;
 };
 
+export async function getMySurvey(
+  accessToken: string,
+): Promise<BackendSuccess<SurveyResponseData | null> | BackendFailure> {
+  try {
+    const response = await backendAuthClient.get<BackendEnvelope<SurveyResponseData>>("/survey/me", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const payload = response.data || null;
+
+    if (response.status < 200 || response.status >= 300) {
+      return {
+        ok: false,
+        status: response.status,
+        message: getErrorMessage(payload, "학생 설문 조회에 실패했습니다."),
+        payload,
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: payload?.data || null,
+      payload,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "설문 서버에 연결하지 못했습니다.",
+      payload: null,
+    };
+  }
+}
+
 export async function submitSurvey(
   accessToken: string,
   body: SubmitSurveyRequest,

@@ -42,6 +42,15 @@ export type SignupSuccessPayload = {
   };
   surveySubmitted?: boolean;
   surveyMessage?: string;
+  survey?: {
+    surveyId: string;
+    userId: string;
+    mbti: string | null;
+    personality: string | null;
+    preference: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
 };
 
 export type SendVerificationSuccessPayload = {
