@@ -6,6 +6,25 @@ export type ChatSendRequest = {
   content: string;
 };
 
+export type ChatMessageAdviceRequest = {
+  groupId: string;
+  content: string;
+};
+
+export type ChatInterventionAdviceRequest = {
+  groupId: string;
+};
+
+export type ChatAdviceResult = {
+  blocked: boolean;
+  message: string;
+  suggestion?: string;
+  warnings: string[];
+  riskLabel?: string;
+};
+
+export type ChatMessageAdviceResult = ChatAdviceResult;
+
 export type ChatJoinedEvent = {
   groupId: string;
   nickname: string;

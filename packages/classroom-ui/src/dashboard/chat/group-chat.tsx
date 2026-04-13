@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ChangeEvent, type CompositionEvent, type KeyboardEvent } from "react";
-import { ArrowUp, Loader2, RotateCcw } from "lucide-react";
+import { ArrowUp, Loader2, RotateCcw, Sparkles } from "lucide-react";
 
 import { cn } from "../../lib/utils";
 import { Button } from "../../ui/button";
@@ -26,6 +26,7 @@ type GroupChatProps = {
   connectionState?: GroupChatConnectionState;
   errorMessage?: string | null;
   sendPending?: boolean;
+  onRequestAdvice?: () => void;
   onDraftChange: (value: string) => void;
   onSend: () => void;
   onRetry?: () => void;
@@ -56,6 +57,7 @@ export function GroupChat({
   connectionState = "idle",
   errorMessage,
   sendPending = false,
+  onRequestAdvice,
   onDraftChange,
   onSend,
   onRetry,
@@ -66,6 +68,7 @@ export function GroupChat({
   const scrollRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
   const canSend = draft.trim().length > 0 && connectionState === "joined" && !sendPending;
+  const canRequestAdvice = draft.trim().length > 0 && connectionState === "joined" && !sendPending;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -219,6 +222,18 @@ export function GroupChat({
                 placeholder="메시지를 입력하세요."
                 className="max-h-[360px] min-h-8 flex-1 resize-none overflow-y-auto rounded-none border-0 px-0 py-0.5 text-sm leading-6 shadow-none focus-visible:ring-0 sm:min-h-9 sm:text-[15px]"
               />
+              {onRequestAdvice ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!canRequestAdvice}
+                  className="h-10 shrink-0 rounded-[18px] border-primary/20 px-4 text-sm font-semibold text-primary shadow-none hover:bg-primary/5 sm:h-11"
+                  onClick={onRequestAdvice}
+                >
+                  <Sparkles className="mr-2 size-4" />
+                  AI 조언
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 size="icon"

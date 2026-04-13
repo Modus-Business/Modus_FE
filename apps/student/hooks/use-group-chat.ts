@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
+import { toast } from "sonner";
 
 import { studentChatApiClient } from "../lib/chat/client";
 import { createChatSocket } from "../lib/chat/socket";
 import type {
+  ChatAdviceResult,
   ChatConnectionState,
   ChatErrorEvent,
   ChatJoinedEvent,
@@ -68,6 +70,10 @@ export function useGroupChat(groupId: string) {
   const [nickname, setNickname] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [connectionState, setConnectionState] = useState<ChatConnectionState>("idle");
+  const [advicePending, setAdvicePending] = useState(false);
+  const [adviceDialogOpen, setAdviceDialogOpen] = useState(false);
+  const [pendingAdvice, setPendingAdvice] = useState<(ChatAdviceResult & { content: string }) | null>(null);
+  const [adviceRequestMode, setAdviceRequestMode] = useState<"send" | "intervention">("intervention");
   const [retryKey, setRetryKey] = useState(0);
 
   const resetState = useCallback((nextState: ChatConnectionState) => {
@@ -185,21 +191,103 @@ export function useGroupChat(groupId: string) {
     };
   }, [disconnect, groupId, resetState, retryKey]);
 
-  const sendMessage = useCallback(() => {
+  const requestMessageAdvice = useCallback(() => {
     const socket = socketRef.current;
     const content = draft.trim();
 
-    if (!socket || !socket.connected || connectionState !== "joined" || !content) {
+    if (!socket || !socket.connected || connectionState !== "joined" || !content || advicePending) {
       return;
     }
 
-    const payload: ChatSendRequest = {
-      content,
+    const requestAdvice = async () => {
+      try {
+        setAdvicePending(true);
+        setAdviceRequestMode("send");
+        const result = await studentChatApiClient.post<ChatAdviceResult>("/api/chat/message-advice", {
+          groupId,
+          content,
+        });
+
+        setPendingAdvice({
+          ...result.data,
+          content,
+        });
+        setAdviceDialogOpen(true);
+      } catch (error) {
+        toast.error(normalizeChatErrorMessage(error as Error));
+        socket.emit("chat.send", { content } satisfies ChatSendRequest);
+        setDraft("");
+      } finally {
+        setAdvicePending(false);
+      }
     };
 
-    socket.emit("chat.send", payload);
+    void requestAdvice();
+  }, [advicePending, connectionState, draft, groupId]);
+
+  const requestInterventionAdvice = useCallback(() => {
+    const socket = socketRef.current;
+    const content = draft.trim();
+    if (!socket || !socket.connected || connectionState !== "joined" || advicePending) {
+      return;
+    }
+
+    const requestAdvice = async () => {
+      try {
+        setAdvicePending(true);
+        setAdviceRequestMode("intervention");
+        const result = await studentChatApiClient.post<ChatAdviceResult>("/api/chat/intervention-advice", {
+          groupId,
+        });
+
+        setPendingAdvice({
+          ...result.data,
+          content,
+        });
+        setAdviceDialogOpen(true);
+      } catch (error) {
+        toast.error(normalizeChatErrorMessage(error as Error));
+      } finally {
+        setAdvicePending(false);
+      }
+    };
+
+    void requestAdvice();
+  }, [advicePending, connectionState, draft, groupId]);
+
+  const sendMessage = useCallback(() => {
+    requestMessageAdvice();
+  }, [requestMessageAdvice]);
+
+  const confirmSendMessage = useCallback(() => {
+    const socket = socketRef.current;
+
+    if (!socket || !socket.connected || connectionState !== "joined" || !pendingAdvice?.content) {
+      return;
+    }
+
+    socket.emit("chat.send", { content: pendingAdvice.content } satisfies ChatSendRequest);
     setDraft("");
-  }, [connectionState, draft]);
+    setPendingAdvice(null);
+    setAdviceDialogOpen(false);
+  }, [connectionState, pendingAdvice]);
+
+  const applyAdviceSuggestion = useCallback(() => {
+    if (!pendingAdvice?.suggestion) {
+      return;
+    }
+
+    setDraft(pendingAdvice.suggestion);
+    setAdviceDialogOpen(false);
+    setPendingAdvice(null);
+    setAdviceRequestMode("intervention");
+  }, [pendingAdvice]);
+
+  const dismissAdvice = useCallback(() => {
+    setAdviceDialogOpen(false);
+    setPendingAdvice(null);
+    setAdviceRequestMode("intervention");
+  }, []);
 
   const retry = useCallback(() => {
     disconnect();
@@ -213,10 +301,34 @@ export function useGroupChat(groupId: string) {
       errorMessage,
       messages,
       nickname,
+      adviceDialogOpen,
+      advicePending,
+      adviceRequestMode,
+      pendingAdvice,
+      applyAdviceSuggestion,
+      confirmSendMessage,
+      dismissAdvice,
+      requestInterventionAdvice,
       retry,
       sendMessage,
       setDraft,
     }),
-    [connectionState, draft, errorMessage, messages, nickname, retry, sendMessage],
+    [
+      adviceDialogOpen,
+      advicePending,
+      adviceRequestMode,
+      applyAdviceSuggestion,
+      confirmSendMessage,
+      connectionState,
+      dismissAdvice,
+      draft,
+      errorMessage,
+      messages,
+      nickname,
+      pendingAdvice,
+      requestInterventionAdvice,
+      retry,
+      sendMessage,
+    ],
   );
 }
