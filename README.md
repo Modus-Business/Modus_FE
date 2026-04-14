@@ -4,7 +4,7 @@ Modus의 인증 허브, 수강생 클래스룸, 교강사 클래스룸을 함께
 
 현재 저장소는 `@modus/classroom-ui`의 공통 UI/목업 데이터를 각 앱이 소비하는 구조로 되어 있으며, 아직 API 연동보다 화면 흐름과 역할별 UX 정리에 무게가 실린 프런트엔드 프로토타입 성격이 강합니다.
 
-https://modus-theta.vercel.app/auth
+https://roadmap.sh/projects/e2e-test-ecommerce-app
 
 ## 프로젝트 성격
 
